@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEQUI - Produtos</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/theme-light.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon"><img class="logo-img" src="../assets/logo_escura.png" alt="CEQUI"></div>
+                <div class="logo-text">
+                    <h1>CEQUI</h1>
+                    <p>Controle de Produtividade</p>
+                </div>
+            </a>
+            <nav class="header-nav">
+                <a href="../index.html" class="nav-btn">Dashboard</a>
+                <a href="cadastro-produtos.html" class="nav-btn">Novo Produto</a>
+                <a href="lista-produtos.html" class="nav-btn">Lista de Produtos</a>
+                <a href="nova-atividade.html" class="nav-btn">Nova Atividade</a>
+                <a href="visao-equipe.html" class="nav-btn">Equipe</a>
+                <a href="relatorios.html" class="nav-btn">Relatórios</a>
+                <a href="configuracoes.html" class="nav-btn">Configurações</a>
+                <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
+            </nav>
+            <div class="header-right" id="headerRight"></div>
+            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav">
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title" id="pageTitle">Meus Produtos</h1>
+            <p class="page-subtitle">Gerencie todos os seus produtos cadastrados</p>
+        </div>
+
+        <div class="server-selector" id="serverGroup">
+            <div style="display:flex;align-items:center;gap:1.25rem;">
+                <label>SERVIDOR:</label>
+                <select id="serverSelect">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="table-header">
+                <h2 class="table-title">Produtos Cadastrados</h2>
+                <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+                    <input type="text" class="search-box" id="searchBox" placeholder="Buscar produtos...">
+                    <a href="cadastro-produtos.html" class="btn btn-primary">+ Novo Produto</a>
+                </div>
+            </div>
+
+            <!-- Seletor de mês/ano -->
+            <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; padding:0.75rem 1rem; background:var(--bg-dark); border-radius:8px; flex-wrap:wrap;">
+                <span style="font-size:0.78rem; color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">Período:</span>
+                <select id="listaMesSelect" onchange="aplicarFiltroMes()" style="padding:0.35rem 0.7rem;background:var(--bg-mid);border:1px solid var(--border);color:var(--text-primary);font-family:var(--code-font);font-size:0.85rem;font-weight:600;border-radius:6px;cursor:pointer;">
+                    <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+                    <option value="2">Março</option><option value="3">Abril</option>
+                    <option value="4">Maio</option><option value="5">Junho</option>
+                    <option value="6">Julho</option><option value="7">Agosto</option>
+                    <option value="8">Setembro</option><option value="9">Outubro</option>
+                    <option value="10">Novembro</option><option value="11">Dezembro</option>
+                </select>
+                <select id="listaAnoSelect" onchange="aplicarFiltroMes()" style="padding:0.35rem 0.7rem;background:var(--bg-mid);border:1px solid var(--border);color:var(--text-primary);font-family:var(--code-font);font-size:0.85rem;font-weight:600;border-radius:6px;cursor:pointer;"></select>
+                
+                
+            </div>
+
+            <!-- Filtros de status -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap:wrap;">
+                <button class="btn btn-secondary filter-btn active" onclick="filtrarPorStatus('todos')">Todos</button>
+                <button class="btn btn-secondary filter-btn" onclick="filtrarPorStatus('em-andamento')">Em Andamento</button>
+                <button class="btn btn-secondary filter-btn" onclick="filtrarPorStatus('finalizado')">Finalizados</button>
+                <button class="btn btn-secondary filter-btn" onclick="filtrarPorStatus('nao-concluido')">Não Concluídos</button>
+            </div>
+
+            <div class="table-wrapper"><table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Produto</th>
+                        <th>Período</th>
+                        <th style="white-space:nowrap;">Duração</th>
+                        <th>Atividades</th>
+                        <th>Pontos</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="produtosTable">
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-state-icon">📦</div>
+                            <p>Carregando...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table></div>
+        </div>
+    </div>
+
+        <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema"></button>
+
+    <style>
+        /* Estado ativo dos botões de filtro */
+        .btn.filter-btn.active {
+            background: var(--primary);
+            color: var(--text-primary);
+            border-color: var(--primary);
+        }
+        .btn.filter-btn.active:hover {
+            background: var(--primary-light);
+        }
+    </style>
+
+<script src="../js/mock-data.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/export.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/lista-produtos.js"></script>
+    <script src="../js/theme.js"></script>
+
+<script>
+function toggleMobileNav() {
+    const nav = document.getElementById('mobileNav');
+    nav.classList.toggle('open');
+}
+// Clonar links do header-nav para o mobile-nav
+document.addEventListener('DOMContentLoaded', function() {
+    // Clonar nav após o auth filtrar os itens (pequeno delay)
+    setTimeout(function() {
+        const headerNav = document.querySelector('.header-nav');
+        const headerRight = document.querySelector('.header-right');
+        const mobileNav = document.getElementById('mobileNav');
+        if (headerNav && mobileNav) {
+            mobileNav.innerHTML = headerNav.innerHTML;
+            if (headerRight && headerRight.innerHTML.trim()) {
+                const sep = document.createElement('div');
+                sep.style.cssText = 'border-top:1px solid var(--border);margin:0.3rem 0;';
+                mobileNav.appendChild(sep);
+                const rightClone = headerRight.cloneNode(true);
+                rightClone.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.25rem 0;justify-content:flex-start;';
+                mobileNav.appendChild(rightClone);
+            }
+        }
+    }, 300);
+});
+</script>
+
+
+</body>
+</html>

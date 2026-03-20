@@ -1,0 +1,222 @@
+.server-info-bar {
+    background: var(--bg-mid);
+    padding: 1rem 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.server-info {
+    display: flex;
+    gap: 2rem;
+}
+
+.server-info-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.server-info-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.server-info-value {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    font-family: var(--code-font);
+}
+
+.steps {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    position: relative;
+}
+
+.steps::before {
+    content: '';
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--border);
+    z-index: 0;
+}
+
+.step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.step:hover .step-number {
+    border-color: var(--primary);
+    opacity: 0.85;
+}
+
+.step.disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+
+.step.completed .step-number {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--bg-mid);
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.step.active .step-number {
+    background: var(--primary);
+    border-color: var(--primary);
+}
+
+.step-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.step.active .step-label {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Estilos adicionais para o formulário de produtos */
+
+.content-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 2rem;
+}
+
+.category-selector {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.category-btn {
+    padding: 0.75rem;
+    background: var(--bg-dark);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+}
+
+.category-btn:hover { background: var(--bg-light); color: var(--text-primary); }
+
+/* Cores inativas (borda sutil) */
+.category-btn.cat-DGSPI { border-color: rgba(99,102,241,0.4);  color: #a5b4fc; }
+.category-btn.cat-EAC   { border-color: rgba(14,165,233,0.4);  color: #7dd3fc; }
+.category-btn.cat-EPCI  { border-color: rgba(239,68,68,0.4);   color: #fca5a5; }
+.category-btn.cat-EEME  { border-color: rgba(245,158,11,0.4);  color: #fcd34d; }
+.category-btn.cat-ECA   { border-color: rgba(16,185,129,0.4);  color: #6ee7b7; }
+.category-btn.cat-ETP   { border-color: rgba(217,70,239,0.4);  color: #f0abfc; }
+
+/* Cores ativas (preenchido) */
+.category-btn.cat-DGSPI.active { background: rgba(99,102,241,0.2);  border-color: #6366f1; color: #a5b4fc; }
+.category-btn.cat-EAC.active   { background: rgba(14,165,233,0.2);  border-color: #0ea5e9; color: #7dd3fc; }
+.category-btn.cat-EPCI.active  { background: rgba(239,68,68,0.2);   border-color: #ef4444; color: #fca5a5; }
+.category-btn.cat-EEME.active  { background: rgba(245,158,11,0.2);  border-color: #f59e0b; color: #fcd34d; }
+.category-btn.cat-ECA.active   { background: rgba(16,185,129,0.2);  border-color: #10b981; color: #6ee7b7; }
+.category-btn.cat-ETP.active   { background: rgba(217,70,239,0.2);  border-color: #d946ef; color: #f0abfc; }
+
+.complexity-selector {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0.5rem;
+}
+
+.complexity-btn {
+    padding: 1rem;
+    background: var(--bg-dark);
+    border: 2px solid var(--border);
+    color: var(--text-secondary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    transition: all 0.2s ease;
+    text-align: center;
+    font-weight: 700;
+}
+
+.complexity-btn:hover {
+    background: var(--bg-light);
+    border-color: var(--primary-light);
+}
+
+.complexity-btn.active {
+    background: var(--primary);
+    color: var(--text-primary);
+    border-color: var(--primary);
+    transform: scale(1.05);
+}
+
+@media (max-width: 1024px) {
+    .content-layout {
+        grid-template-columns: 1fr;
+    }
+    
+    .category-selector {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── Produtos responsivo ──────────────────────────────────── */
+@media (max-width: 768px) {
+    .content-layout {
+        grid-template-columns: 1fr;
+    }
+
+    .category-selector {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .filter-group {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .filter-group .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .category-selector {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+    }
+
+    .category-option {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+    }
+}
+.category-btn.disabled-cat { opacity: 0.4; }

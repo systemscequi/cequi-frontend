@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEQUI - Cadastro de Atividades Padrão</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/atividades.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/theme-light.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon"><img class="logo-img" src="../assets/logo_escura.png" alt="CEQUI"></div>
+                <div class="logo-text">
+                    <h1>CEQUI</h1>
+                    <p>Controle de Produtividade</p>
+                </div>
+            </a>
+            <nav class="header-nav">
+                <a href="../index.html" class="nav-btn">Dashboard</a>
+                <a href="cadastro-produtos.html" class="nav-btn">Novo Produto</a>
+                <a href="lista-produtos.html" class="nav-btn">Lista de Produtos</a>
+                <a href="cadastro-atividades.html" class="nav-btn active">Nova Atividade</a>
+                <a href="visao-equipe.html" class="nav-btn">Equipe</a>
+                <a href="relatorios.html" class="nav-btn">Relatórios</a>
+                <a href="configuracoes.html" class="nav-btn">Configurações</a>
+                <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
+            </nav>
+            <div class="header-right" id="headerRight"></div>
+            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav"></nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Atividades Padrão</h1>
+            <p class="page-subtitle">Gerencie as atividades padronizadas por categoria</p>
+        </div>
+
+        <!-- Tabs de Categorias -->
+        <div class="category-tabs">
+            <button class="category-tab active" data-category="DGSPI">📋 Direção e Gestão</button>
+            <button class="category-tab" data-category="EAC">❄️ Ar Condicionado</button>
+            <button class="category-tab" data-category="EPCI">🔥 Proteção Incêndio</button>
+            <button class="category-tab" data-category="EEME">⚙️ Equipamentos Mec/Elet</button>
+            <button class="category-tab" data-category="ECA">🤖 Controle e Automação</button>
+            <button class="category-tab" data-category="ETP">🛗 Transportes Prediais</button>
+            <button class="category-tab" data-category="LIVRE" id="tabLivre" style="border-color:var(--warning);color:var(--warning);">🆓 Atividades Livres</button>
+        </div>
+
+        <div class="content-grid">
+            <!-- Formulário -->
+            <div class="card">
+                <h2 class="card-title">Nova Atividade</h2>
+                <p class="form-subtitle" id="categorySubtitle">Categoria: Direção, gestão, supervisão, planejamento e informação</p>
+                <form id="atividadeForm">
+                    <div class="form-group">
+                        <label class="form-label">Código</label>
+                        <input type="text" class="form-input readonly" id="codigoPreview" readonly style="opacity:0.6;cursor:not-allowed;">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Atividade <span class="required">*</span></label>
+                        <textarea class="form-textarea" id="atividade" placeholder="Descreva a atividade..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Peso Padrão <span class="required">*</span></label>
+                        <input type="number" class="form-input" id="pesoPadrao" placeholder="Ex: 8" min="1" max="50" required>
+                    </div>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">💾 Salvar</button>
+                        <button type="button" class="btn btn-secondary" onclick="limparForm()">🔄 Limpar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabela -->
+            <div class="card">
+                <div class="table-header">
+                    <h2 class="table-title">Atividades Cadastradas</h2>
+                    <span class="table-count" id="atividadeCount">0 atividades</span>
+                </div>
+                <input type="text" class="search-box" id="searchBox" placeholder="Buscar atividade...">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Atividade</th>
+                            <th>Peso</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="atividadesTable">
+                        <tr>
+                            <td colspan="4" class="empty-state">
+                                <div class="empty-state-icon">📝</div>
+                                <p>Carregando...</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema"></button>
+
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/export.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/atividades.js"></script>
+    <script src="../js/theme.js"></script>
+
+    <script>
+    function toggleMobileNav() {
+        document.getElementById('mobileNav').classList.toggle('open');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const headerNav = document.querySelector('.header-nav');
+            const headerRight = document.querySelector('.header-right');
+            const mobileNav = document.getElementById('mobileNav');
+            if (headerNav && mobileNav) {
+                mobileNav.innerHTML = headerNav.innerHTML;
+                if (headerRight && headerRight.innerHTML.trim()) {
+                    const sep = document.createElement('div');
+                    sep.style.cssText = 'border-top:1px solid var(--border);margin:0.3rem 0;';
+                    mobileNav.appendChild(sep);
+                    const rc = headerRight.cloneNode(true);
+                    rc.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.25rem 0;';
+                    mobileNav.appendChild(rc);
+                }
+            }
+        }, 300);
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEQUI - Relatórios</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/theme-light.css">
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon"><img class="logo-img" src="../assets/logo_escura.png" alt="CEQUI"></div>
+                <div class="logo-text">
+                    <h1>CEQUI</h1>
+                    <p>Controle de Produtividade</p>
+                </div>
+            </a>
+            <nav class="header-nav">
+                <a href="../index.html" class="nav-btn">Dashboard</a>
+                <a href="cadastro-produtos.html" class="nav-btn">Novo Produto</a>
+                <a href="lista-produtos.html" class="nav-btn">Lista de Produtos</a>
+                <a href="nova-atividade.html" class="nav-btn">Nova Atividade</a>
+                <a href="visao-equipe.html" class="nav-btn">Equipe</a>
+                <a href="relatorios.html" class="nav-btn active">Relatórios</a>
+                <a href="configuracoes.html" class="nav-btn">Configurações</a>
+                <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
+            </nav>
+            <div class="header-right" id="headerRight"></div>
+            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav">
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Relatórios</h1>
+            <p class="page-subtitle">Gere relatórios de produtividade individual ou da equipe</p>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">Filtros de Relatório</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label">Tipo de Relatório</label>
+                    <select class="form-select" id="tipoRelatorio">
+                        <option value="individual">Individual</option>
+                        <option value="equipe">Equipe Completa</option>
+                    </select>
+                </div>
+                <div class="form-group" id="servidorGroup">
+                    <label class="form-label">Servidor</label>
+                    <select class="form-select" id="servidorSelect">
+                        <option value="">Selecione...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data Inicial <span class="required">*</span></label>
+                    <input type="date" class="form-input" id="dataInicio">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Data Final <span class="required">*</span></label>
+                    <input type="date" class="form-input" id="dataFim">
+                </div>
+            </div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="gerarRelatorio()">📊 Gerar Relatório</button>
+                <button class="btn btn-secondary" onclick="exportarExcel()">📊 Excel</button>
+                <button class="btn btn-secondary" onclick="exportarCSVDetalhado()">📋 CSV Detalhado</button>
+            </div>
+        </div>
+
+        <div class="card" id="relatorioContent" style="display: none;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.75rem;">
+                <h2 class="card-title" style="margin:0;">Resultado do Relatório</h2>
+                <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+                    <button class="btn btn-secondary" onclick="exportarExcel()" style="font-size:0.8rem;padding:0.4rem 0.8rem;">📊 Excel</button>
+                    <button class="btn btn-secondary" onclick="exportarCSVDetalhado()" style="font-size:0.8rem;padding:0.4rem 0.8rem;">📋 CSV Detalhado</button>
+                </div>
+            </div>
+            <div id="relatorioData"></div>
+        </div>
+    </div>
+
+        <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema"></button>
+
+<script src="../js/mock-data.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/export.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/relatorios.js"></script>
+    <script src="../js/theme.js"></script>
+
+<script>
+function toggleMobileNav() {
+    const nav = document.getElementById('mobileNav');
+    nav.classList.toggle('open');
+}
+// Clonar links do header-nav para o mobile-nav
+document.addEventListener('DOMContentLoaded', function() {
+    // Clonar nav após o auth filtrar os itens (pequeno delay)
+    setTimeout(function() {
+        const headerNav = document.querySelector('.header-nav');
+        const headerRight = document.querySelector('.header-right');
+        const mobileNav = document.getElementById('mobileNav');
+        if (headerNav && mobileNav) {
+            mobileNav.innerHTML = headerNav.innerHTML;
+            if (headerRight && headerRight.innerHTML.trim()) {
+                const sep = document.createElement('div');
+                sep.style.cssText = 'border-top:1px solid var(--border);margin:0.3rem 0;';
+                mobileNav.appendChild(sep);
+                const rightClone = headerRight.cloneNode(true);
+                rightClone.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.25rem 0;justify-content:flex-start;';
+                mobileNav.appendChild(rightClone);
+            }
+        }
+    }, 300);
+});
+</script>
+</body>
+</html>

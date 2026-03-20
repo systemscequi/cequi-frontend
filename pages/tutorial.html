@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEQUI - Tutorial de Uso</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/theme-light.css">
+    <style>
+        .tut-step { border-radius: 12px; padding: 1.75rem; margin-bottom: 1.5rem; border-left: 4px solid; }
+        .tut-step h2 { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; font-size: 1.15rem; }
+        .step-num { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1rem; flex-shrink: 0; color: white; }
+        .tut-inner { background: var(--bg-dark); border-radius: 8px; padding: 1.25rem; margin-top: 0.75rem; }
+        .tut-inner ol, .tut-inner ul { padding-left: 1.5rem; line-height: 2; }
+        .tut-inner li { margin-bottom: 0.15rem; }
+        .formula-grid { display: grid; gap: 0.75rem; margin-top: 0.75rem; }
+        .formula-box { background: var(--bg-dark); padding: 1rem; border-radius: 8px; }
+        .tip-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 0.75rem; margin-top: 0.75rem; }
+        .tip-card { background: var(--bg-dark); padding: 1rem; border-radius: 8px; border-left: 3px solid var(--primary); }
+        .tip-card h4 { font-size: 0.85rem; color: var(--accent); margin-bottom: 0.4rem; }
+        .tip-card p { font-size: 0.82rem; color: var(--text-secondary); margin: 0; }
+        .status-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .status-pill { padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .toc { background: var(--bg-mid); border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; }
+        .toc h3 { font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.75rem; }
+        .toc a { display: inline-block; color: var(--accent); font-size: 0.88rem; text-decoration: none; margin: 0.2rem 0.5rem 0.2rem 0; }
+        .toc a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon"><img class="logo-img" src="../assets/logo_escura.png" alt="CEQUI"></div>
+                <div class="logo-text"><h1>CEQUI</h1><p>Controle de Produtividade</p></div>
+            </a>
+            <nav class="header-nav">
+                <a href="../index.html" class="nav-btn">Dashboard</a>
+                <a href="cadastro-produtos.html" class="nav-btn">Novo Produto</a>
+                <a href="lista-produtos.html" class="nav-btn">Lista de Produtos</a>
+                <a href="nova-atividade.html" class="nav-btn">Nova Atividade</a>
+                <a href="visao-equipe.html" class="nav-btn">Equipe</a>
+                <a href="relatorios.html" class="nav-btn">Relatórios</a>
+                <a href="configuracoes.html" class="nav-btn">Configurações</a>
+                <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
+            </nav>
+            <div class="header-right" id="headerRight"></div>
+            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu"><span></span><span></span><span></span></button>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav"></nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">🎓 Tutorial — Sistema CEQUI</h1>
+            <p class="page-subtitle">Guia completo de uso do sistema de controle de produtividade</p>
+        </div>
+
+        <!-- Índice -->
+        <div class="toc">
+            <h3>📋 Neste tutorial</h3>
+            <a href="#presenca">1. Controle de Presença</a>
+            <a href="#produtos">2. Cadastro de Produtos</a>
+            <a href="#atividades">3. Atividades nos Produtos</a>
+            <a href="#atividades-livres">4. Atividades Livres</a>
+            <a href="#status">5. Status dos Produtos</a>
+            <a href="#lista">6. Lista de Produtos</a>
+            <a href="#dashboard">7. Dashboard</a>
+            <a href="#relatorios">8. Relatórios</a>
+            <a href="#equipe">9. Visão da Equipe</a>
+            <a href="#calculos">10. Como os Cálculos Funcionam</a>
+            <a href="#dicas">11. Dicas</a>
+        </div>
+
+        <!-- 1. Presença -->
+        <div id="presenca" class="tut-step card" style="border-color: var(--success);">
+            <h2 style="color: var(--success);">
+                <span class="step-num" style="background: var(--success);">1</span>
+                Registrar Dias Trabalhados <span style="font-size:0.8rem;color:var(--warning);margin-left:0.5rem;">⚠️ ESSENCIAL</span>
+            </h2>
+            <p>Sem registrar os dias trabalhados, o cálculo de produtividade ficará incorreto. Faça isso todo mês.</p>
+            <div class="tut-inner">
+                <ol>
+                    <li>Acesse <strong>Controle de Presença</strong> pelo menu</li>
+                    <li>Selecione o servidor no topo da página</li>
+                    <li>Navegue até o mês desejado</li>
+                    <li>Clique em cada dia para alternar entre os status:</li>
+                </ol>
+                <div class="status-row">
+                    <span class="status-pill" style="background:rgba(16,185,129,0.2);color:var(--success);border:1px solid var(--success);">✓ Trabalhado</span>
+                    <span class="status-pill" style="background:rgba(245,158,11,0.2);color:var(--warning);border:1px solid var(--warning);">⚠ Ausência justificada</span>
+                    <span class="status-pill" style="background:rgba(59,130,246,0.2);color:#60a5fa;border:1px solid #3B82F6;">🔵 Dispensa de ponto</span>
+                    <span class="status-pill" style="background:rgba(129,140,248,0.2);color:#818cf8;border:1px solid #818cf8;">🏦 Banco de horas</span>
+                    <span class="status-pill" style="background:rgba(234,179,8,0.2);color:#ca8a04;border:1px solid #ca8a04;">🌴 Férias</span>
+                </div>
+                <p style="margin-top:0.75rem;font-size:0.85rem;">💡 Use o botão <strong>"📋 Registrar Mês"</strong> para marcar todos os dias úteis de uma vez.</p>
+            </div>
+        </div>
+
+        <!-- 2. Produtos -->
+        <div id="produtos" class="tut-step card" style="border-color: var(--primary);">
+            <h2 style="color: var(--accent);">
+                <span class="step-num" style="background: var(--primary);">2</span>
+                Cadastrar Produtos
+            </h2>
+            <p>Cada produto representa um projeto ou demanda. O fluxo é dividido em etapas.</p>
+            <div class="tut-inner">
+                <ol>
+                    <li><strong>Etapa 1 — Dados do Produto:</strong> Informe o nome do produto. O código é gerado automaticamente. Defina data de início e fim — ambas devem estar no <strong>mesmo mês</strong>.</li>
+                    <li><strong>Etapa 2 — Atividades:</strong> Adicione as atividades padrão do produto (ver passo 3).</li>
+                    <li><strong>Etapa 3 — Revisão:</strong> Confira tudo e salve. O produto será criado com status <em>Em Andamento</em>.</li>
+                </ol>
+                <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">💡 Você também pode editar um produto depois pela <strong>Lista de Produtos</strong>.</p>
+            </div>
+        </div>
+
+        <!-- 3. Atividades -->
+        <div id="atividades" class="tut-step card" style="border-color: var(--secondary);">
+            <h2 style="color: var(--secondary-light);">
+                <span class="step-num" style="background: var(--secondary);">3</span>
+                Adicionar Atividades Padrão
+            </h2>
+            <p>Cada produto deve ter ao menos uma atividade. As atividades padrão vêm de uma biblioteca por categoria.</p>
+            <div class="tut-inner">
+                <ol>
+                    <li>Na tela <strong>Nova Atividade</strong>, selecione o produto</li>
+                    <li>Escolha a <strong>categoria</strong> (DGSPI, EAC, EPCI, EEME, ECA, ETP)</li>
+                    <li>Selecione a <strong>atividade padrão</strong> no dropdown — o tooltip mostra o texto completo</li>
+                    <li>Defina a <strong>complexidade</strong>: 0.5 · 1 · 1.5</li>
+                    <li>Os <strong>pontos são calculados automaticamente</strong>: Peso × Complexidade</li>
+                    <li>Adicione uma <strong>observação</strong> se necessário e clique em <strong>Adicionar</strong></li>
+                </ol>
+                <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">💡 Para editar uma atividade já adicionada, clique no ✏️ ao lado dela na lista.</p>
+            </div>
+        </div>
+
+        <!-- 4. Atividades Livres -->
+        <div id="atividades-livres" class="tut-step card" style="border-color: var(--accent);">
+            <h2 style="color: var(--accent);">
+                <span class="step-num" style="background: var(--accent);">4</span>
+                Atividades Livres
+            </h2>
+            <p>Quando nenhuma atividade padrão se encaixa, você pode criar uma atividade livre diretamente.</p>
+            <div class="tut-inner">
+                <ol>
+                    <li>Acesse <strong>Cadastro de Atividades → aba 🆓 Atividades Livres</strong></li>
+                    <li>Preencha descrição, categoria, complexidade e peso (2 a 20, apenas pares)</li>
+                    <li>O código é gerado automaticamente no padrão LIVRE01, LIVRE02...</li>
+                    <li>A atividade fica disponível nos seletores de nova atividade</li>
+                </ol>
+                <p style="margin-top:0.75rem;font-size:0.85rem;">💡 Com o botão <strong>⭐ Tornar Padrão</strong>, você pode promover a atividade para a biblioteca oficial — o admin define o código e categoria definitivos.</p>
+            </div>
+        </div>
+
+        <!-- 5. Status -->
+        <div id="status" class="tut-step card" style="border-color: #818cf8;">
+            <h2 style="color: #818cf8;">
+                <span class="step-num" style="background: #818cf8;">5</span>
+                Status dos Produtos
+            </h2>
+            <div class="tut-inner">
+                <div class="status-row" style="margin-bottom:0.75rem;">
+                    <span class="status-pill" style="background:rgba(245,158,11,0.2);color:var(--warning);border:1px solid var(--warning);">🔄 Em Andamento</span>
+                    <span class="status-pill" style="background:rgba(16,185,129,0.2);color:var(--success);border:1px solid var(--success);">✅ Finalizado</span>
+                    <span class="status-pill" style="background:rgba(129,140,248,0.2);color:#818cf8;border:1px solid #818cf8;">❌ Não Concluído</span>
+                </div>
+                <ul>
+                    <li><strong>Em Andamento:</strong> status inicial de todo produto cadastrado</li>
+                    <li><strong>Finalizado:</strong> produto concluído — entra no cálculo de produtividade. Pode ser marcado manualmente na edição do produto</li>
+                    <li><strong>Não Concluído:</strong> atribuído automaticamente quando o mês vira sem o produto ser finalizado. Pode ser alterado manualmente apenas pelo <strong>admin</strong></li>
+                </ul>
+                <p style="font-size:0.85rem;color:var(--text-muted);margin-top:0.5rem;">⚠️ Apenas produtos <strong>Finalizados</strong> entram no cálculo de produtividade. Produtos em andamento são contabilizados na pontuação total.</p>
+            </div>
+        </div>
+
+        <!-- 6. Lista de Produtos -->
+        <div id="lista" class="tut-step card" style="border-color: var(--primary);">
+            <h2 style="color: var(--accent);">
+                <span class="step-num" style="background: var(--primary);">6</span>
+                Lista de Produtos
+            </h2>
+            <p>Visualize, filtre e gerencie todos os seus produtos em um só lugar.</p>
+            <div class="tut-inner">
+                <ul>
+                    <li>Filtre por <strong>mês/ano</strong> — mostra produtos cujo início é naquele mês</li>
+                    <li>Filtre por <strong>status</strong> (Em Andamento / Finalizado / Não Concluído)</li>
+                    <li>Clique em <strong>✏️ Editar</strong> para alterar dados do produto, incluindo status</li>
+                    <li>A coluna <strong>Duração</strong> mostra os dias corridos entre início e fim</li>
+                    <li>Clique em <strong>➕ Adicionar Atividade</strong> para incluir mais atividades no produto</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 7. Dashboard -->
+        <div id="dashboard" class="tut-step card" style="border-color: var(--accent);">
+            <h2 style="color: var(--accent);">
+                <span class="step-num" style="background: var(--accent);">7</span>
+                Dashboard
+            </h2>
+            <p>Visão rápida do mês selecionado. Use o seletor de servidor no topo para alternar entre colaboradores (admin).</p>
+            <div class="tut-inner">
+                <ul>
+                    <li><strong>Pontos Finalizados:</strong> soma dos pontos de produtos finalizados no mês</li>
+                    <li><strong>Produtividade Média:</strong> pontos finalizados ÷ dias trabalhados</li>
+                    <li><strong>Desempenho Relativo:</strong> comparativo em % com a média da equipe no mesmo mês</li>
+                    <li><strong>Gauge de Presença:</strong> taxa de dias trabalhados vs dias úteis</li>
+                    <li>A lista de produtos mostra todos os do mês, com atividades expansíveis</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 8. Relatórios -->
+        <div id="relatorios" class="tut-step card" style="border-color: var(--secondary);">
+            <h2 style="color: var(--secondary-light);">
+                <span class="step-num" style="background: var(--secondary);">8</span>
+                Relatórios
+            </h2>
+            <div class="tut-inner">
+                <p style="margin-bottom:0.75rem;"><strong>Relatório Individual</strong> — selecione servidor e período. Mostra:</p>
+                <ul style="margin-bottom:1rem;">
+                    <li>KPIs: Pontos Finalizados, Produtividade Média Diária, Pontuação Total, Total de Produtos, Duração Média</li>
+                    <li>Card unificado de status (Em Andamento / Finalizados / Não Concluídos)</li>
+                    <li>Tabela de produtos com atividades expansíveis</li>
+                    <li>Exportação em <strong>Excel (.xlsx)</strong> com abas "Produtos" e "Atividades"</li>
+                </ul>
+                <p style="margin-bottom:0.75rem;"><strong>Relatório da Equipe</strong> — mostra todos os servidores no período. Inclui:</p>
+                <ul>
+                    <li>KPIs: Total Servidores, Total Produtos, Média Geral, Média por Área, Pontuação média equipe/dia, Duração Média</li>
+                    <li>Tabela com Total Prod., Dias Trab., Finalizados, Não Concluídos, Duração Média, Pontos, Média/Dia, Desempenho Relativo</li>
+                    <li>Exportação em <strong>Excel (.xlsx)</strong> com todos os indicadores</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 9. Visão Equipe -->
+        <div id="equipe" class="tut-step card" style="border-color: var(--primary);">
+            <h2 style="color: var(--accent);">
+                <span class="step-num" style="background: var(--primary);">9</span>
+                Visão da Equipe <span style="font-size:0.8rem;color:var(--warning);margin-left:0.5rem;">🔒 Admin</span>
+            </h2>
+            <p>Comparativo de produtividade de todos os servidores filtrado por mês.</p>
+            <div class="tut-inner">
+                <ul>
+                    <li>Filtre por <strong>mês/ano</strong> — usa a regra de início do produto</li>
+                    <li>KPIs: Total Servidores, Produtos do Mês (And/Fin/N.C.), Média de Produtividade, Pontuação média equipe/dia, Duração Média dos Produtos</li>
+                    <li>Tabela com Total Produtos, Dias Trabalhados, Pontos, Média Diária e <strong>Desempenho Relativo</strong> (% vs média da equipe)</li>
+                    <li>Clique em um servidor para ir direto ao dashboard dele</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 10. Cálculos -->
+        <div id="calculos" class="card" style="background: rgba(10, 77, 60, 0.15); border: 2px solid var(--primary);">
+            <h2 style="color: var(--accent); margin-bottom: 1rem;">📐 Como os Cálculos Funcionam</h2>
+            <div class="formula-grid">
+                <div class="formula-box">
+                    <strong style="color:var(--accent);">Pontos do Produto</strong><br>
+                    <code>Σ (Peso da Atividade × Complexidade)</code>
+                </div>
+                <div class="formula-box">
+                    <strong style="color:var(--accent);">Produtividade Média Diária</strong><br>
+                    <code>Pontos Finalizados ÷ Dias Trabalhados</code>
+                </div>
+                <div class="formula-box">
+                    <strong style="color:var(--accent);">Pontuação média equipe/dia</strong><br>
+                    <code>Σ(média diária individual) ÷ servidores com registro</code>
+                </div>
+                <div class="formula-box">
+                    <strong style="color:var(--accent);">Duração Média dos Produtos</strong><br>
+                    <code>Σ(dias corridos de produtos finalizados) ÷ total finalizados</code>
+                </div>
+                <div class="formula-box">
+                    <strong style="color:var(--accent);">Desempenho Relativo</strong><br>
+                    <code>(Pontos Servidor − Média Equipe) ÷ Média Equipe × 100%</code>
+                </div>
+                <div class="formula-box">
+                    <strong style="color:var(--accent);">Taxa de Presença</strong><br>
+                    <code>(Dias Trabalhados ÷ Dias Úteis) × 100%</code>
+                </div>
+            </div>
+            <div style="background:var(--bg-dark);padding:1rem;border-radius:8px;margin-top:0.75rem;font-size:0.85rem;">
+                <strong>🗓️ Regra do Mês:</strong> Todos os filtros por mês usam a <strong>data de início</strong> do produto. Um produto de janeiro só aparece em janeiro, independente de quando foi finalizado.
+                <br><br>
+                <strong>📊 Benchmark:</strong> A meta de produtividade é de <strong>8 pts/dia</strong> para todas as áreas. Indicadores ficam verdes acima de 8, amarelos entre 6.4 e 8, e vermelhos abaixo de 6.4.
+            </div>
+        </div>
+
+        <!-- 11. Dicas -->
+        <div id="dicas" class="card">
+            <h2 style="color: var(--warning); margin-bottom: 1rem;">💡 Dicas Importantes</h2>
+            <div class="tip-grid">
+                <div class="tip-card">
+                    <h4>📅 Registre a presença todo mês</h4>
+                    <p>É o dado mais importante. Sem ele, a produtividade não é calculada.</p>
+                </div>
+                <div class="tip-card">
+                    <h4>✅ Finalize os produtos</h4>
+                    <p>Apenas produtos finalizados entram no cálculo de produtividade.</p>
+                </div>
+                <div class="tip-card">
+                    <h4>📆 Mesmo mês</h4>
+                    <p>Data de início e fim do produto devem estar no mesmo mês.</p>
+                </div>
+                <div class="tip-card">
+                    <h4>🆓 Use atividades livres</h4>
+                    <p>Quando nenhuma atividade padrão se encaixa, crie uma livre e peça para torná-la padrão depois.</p>
+                </div>
+                <div class="tip-card">
+                    <h4>💾 Faça backup regularmente</h4>
+                    <p>Configurações → Exportar Backup. Guarde o arquivo em local seguro.</p>
+                </div>
+                <div class="tip-card">
+                    <h4>📊 Acompanhe a equipe</h4>
+                    <p>A Visão da Equipe (admin) mostra o Desempenho Relativo de cada servidor vs a média.</p>
+                </div>
+                <div class="tip-card">
+                    <h4>📥 Export Excel</h4>
+                    <p>Os relatórios exportam em .xlsx com abas separadas por tipo de dado.</p>
+                </div>
+                <div class="tip-card">
+                    <h4>🔒 Sessão automática</h4>
+                    <p>A sessão expira em 8 horas e é apagada ao fechar o navegador por segurança.</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <a href="../index.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 3rem;">
+                🚀 Ir para o Dashboard
+            </a>
+        </div>
+    </div>
+
+    <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema"></button>
+
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/theme.js"></script>
+    <script>
+        function toggleMobileNav() {
+            const nav = document.getElementById('mobileNav');
+            nav.classList.toggle('open');
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(function() {
+                const headerNav = document.querySelector('.header-nav');
+                const headerRight = document.querySelector('.header-right');
+                const mobileNav = document.getElementById('mobileNav');
+                if (headerNav && mobileNav) {
+                    mobileNav.innerHTML = headerNav.innerHTML;
+                    if (headerRight && headerRight.innerHTML.trim()) {
+                        const sep = document.createElement('div');
+                        sep.style.cssText = 'border-top:1px solid var(--border);margin:0.3rem 0;';
+                        mobileNav.appendChild(sep);
+                        const rightClone = headerRight.cloneNode(true);
+                        rightClone.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.25rem 0;justify-content:flex-start;';
+                        mobileNav.appendChild(rightClone);
+                    }
+                }
+            }, 600);
+        });
+    </script>
+</body>
+</html>

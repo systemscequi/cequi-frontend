@@ -1,0 +1,45 @@
+/**
+ * CEQUI - Colaboradores
+ */
+
+.content-grid {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 2rem;
+    align-items: start;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.table-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.actions-cell {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* Role cards no modal */
+#boxUser, #boxAdmin {
+    cursor: pointer;
+    user-select: none;
+}
+#boxUser:hover  { border-color: var(--success) !important; }
+#boxAdmin:hover { border-color: var(--secondary) !important; }
+
+@media (max-width: 1100px) {
+    .content-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .content-grid { gap: 1rem; }
+}

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEQUI - Colaboradores</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/theme-light.css">
+    <style>
+        .content-grid {
+            display: grid;
+            grid-template-columns: 360px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        @media (max-width: 1050px) { .content-grid { grid-template-columns: 1fr; } }
+
+        /* ── Tabela ── */
+        .colabs-table th, .colabs-table td { padding: 0.75rem 1rem; }
+        .colabs-table tbody tr { cursor: pointer; transition: background 0.15s; }
+        .colabs-table tbody tr:hover { background: var(--bg-light); }
+
+        /* ── Badges ── */
+        .badge-admin {
+            display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px;
+            background: rgba(217,119,6,0.15); color: #f59e0b;
+            border: 1px solid rgba(217,119,6,0.4);
+        }
+        .badge-user {
+            display: inline-block; padding: 0.2rem 0.65rem; border-radius: 20px;
+            font-size: 0.72rem; font-weight: 700; letter-spacing: 0.3px;
+            background: rgba(16,185,129,0.12); color: var(--success);
+            border: 1px solid rgba(16,185,129,0.35);
+        }
+        .senha-dots { font-family: var(--code-font); font-size: 0.82rem; color: var(--text-muted); letter-spacing: 2px; }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.78);
+            z-index: 10000; display: flex; align-items: center;
+            justify-content: center; padding: 1rem; animation: fadeIn 0.2s ease;
+        }
+        .modal-box {
+            background: var(--bg-mid); border: 1px solid var(--border);
+            border-radius: 14px; padding: 2rem; max-width: 500px; width: 100%;
+            animation: scaleIn 0.2s ease; max-height: 92vh; overflow-y: auto;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 1.75rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);
+        }
+        .modal-close {
+            background: none; border: none; color: var(--text-muted);
+            font-size: 1.6rem; cursor: pointer; line-height: 1; padding: 0;
+            transition: color 0.15s;
+        }
+        .modal-close:hover { color: var(--text-primary); }
+
+        /* ── Role cards ── */
+        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.5rem; }
+        .role-card {
+            padding: 0.85rem; border-radius: 10px; border: 2px solid var(--border);
+            text-align: center; cursor: pointer; transition: all 0.15s; user-select: none;
+        }
+        .role-card:hover { border-color: var(--primary-light); }
+        .role-card.selected-user  { border-color: var(--success); background: rgba(16,185,129,0.1); }
+        .role-card.selected-admin { border-color: #f59e0b; background: rgba(217,119,6,0.1); }
+        .role-card-icon  { font-size: 1.3rem; margin-bottom: 0.3rem; }
+        .role-card-label { font-size: 0.83rem; font-weight: 700; }
+        .role-card-sub   { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+        /* ── Input senha com olho ── */
+        .senha-wrapper { position: relative; }
+        .senha-wrapper .form-input { width: 100%; padding-right: 2.8rem; }
+        .btn-eye {
+            position: absolute; right: 0.65rem; top: 50%; transform: translateY(-50%);
+            background: none; border: none; color: var(--text-muted);
+            cursor: pointer; font-size: 1rem; line-height: 1; padding: 0;
+        }
+        .btn-eye:hover { color: var(--text-primary); }
+
+        /* ── Senha hint ── */
+        .senha-hint {
+            margin-top: 0.4rem; padding: 0.45rem 0.65rem;
+            background: var(--bg-dark); border-radius: 6px; border: 1px solid var(--border);
+            font-size: 0.72rem; color: var(--text-muted);
+            display: flex; align-items: center; gap: 0.4rem;
+        }
+        .senha-hint code { font-family: var(--code-font); color: var(--primary-light); }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon"><img class="logo-img" src="../assets/logo_escura.png" alt="CEQUI"></div>
+                <div class="logo-text"><h1>CEQUI</h1><p>Controle de Produtividade</p></div>
+            </a>
+            <nav class="header-nav">
+                <a href="../index.html" class="nav-btn">Dashboard</a>
+                <a href="cadastro-produtos.html" class="nav-btn">Novo Produto</a>
+                <a href="lista-produtos.html" class="nav-btn">Lista de Produtos</a>
+                <a href="nova-atividade.html" class="nav-btn">Nova Atividade</a>
+                <a href="visao-equipe.html" class="nav-btn">Equipe</a>
+                <a href="relatorios.html" class="nav-btn">Relatórios</a>
+                <a href="configuracoes.html" class="nav-btn active">Configurações</a>
+                <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
+            </nav>
+            <div class="header-right" id="headerRight"></div>
+            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav"></nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Colaboradores</h1>
+            <p class="page-subtitle">Cadastre e gerencie servidores, senhas e níveis de acesso</p>
+        </div>
+
+        <div class="content-grid">
+
+            <!-- ── Formulário novo colaborador ─────────────── -->
+            <div class="card">
+                <h2 class="card-title">Novo Colaborador</h2>
+                <form id="colaboradorForm">
+
+                    <div class="form-group">
+                        <label class="form-label">Nome do Servidor <span class="required">*</span></label>
+                        <input type="text" class="form-input" id="nomeServidor"
+                               placeholder="Ex: Alexandre Lopes Gonçalves" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Ponto <span class="required">*</span></label>
+                        <input type="number" class="form-input" id="ponto"
+                               placeholder="Ex: 12" min="1" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Área Temática <span class="required">*</span></label>
+                        <select class="form-select" id="areaTematica" required>
+                            <option value="">Selecione uma área</option>
+                            <option value="Mecânica">Mecânica</option>
+                            <option value="Eletrônica">Eletrônica</option>
+                            <option value="CEQUI">CEQUI</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Nível de Acesso <span class="required">*</span></label>
+                        <select class="form-select" id="novoRole">
+                            <option value="user">👤 Usuário — acesso próprio</option>
+                            <option value="admin">🔑 Admin — acesso total</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Senha de Acesso</label>
+                        <div class="senha-wrapper">
+                            <input type="text" class="form-input" id="novaSenha"
+                                   placeholder="Padrão: cequi2026"
+                                   style="font-family:var(--code-font);">
+                        </div>
+                        <div class="senha-hint">🔒 Deixe em branco para senha padrão: <code>cequi2026</code></div>
+                    </div>
+
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-primary">💾 Cadastrar</button>
+                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('colaboradorForm').reset()">🔄 Limpar</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ── Tabela ───────────────────────────────────── -->
+            <div class="card">
+                <div class="table-header">
+                    <h2 class="table-title">Servidores Cadastrados</h2>
+                    <input type="text" class="search-box" id="searchBox" placeholder="Buscar...">
+                </div>
+
+                <div class="table-wrapper">
+                    <table class="colabs-table" style="width:100%;border-collapse:collapse;">
+                        <thead>
+                            <tr>
+                                <th>Ponto</th>
+                                <th>Nome</th>
+                                <th>Área</th>
+                                <th>Acesso</th>
+                                <th>Senha</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="colaboradoresTable">
+                            <tr>
+                                <td colspan="6" class="empty-state">
+                                    <div class="empty-state-icon">👤</div>
+                                    <p>Carregando...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema"></button>
+
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/export.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/colaboradores.js"></script>
+    <script src="../js/theme.js"></script>
+    <script>
+    function toggleMobileNav() {
+        document.getElementById('mobileNav').classList.toggle('open');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const h = document.querySelector('.header-nav');
+            const r = document.querySelector('.header-right');
+            const m = document.getElementById('mobileNav');
+            if (h && m) {
+                m.innerHTML = h.innerHTML;
+                if (r && r.innerHTML.trim()) {
+                    const sep = document.createElement('div');
+                    sep.style.cssText = 'border-top:1px solid var(--border);margin:0.3rem 0;';
+                    m.appendChild(sep);
+                    const rc = r.cloneNode(true);
+                    rc.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.25rem 0;';
+                    m.appendChild(rc);
+                }
+            }
+        }, 200);
+    });
+    </script>
+</body>
+</html>

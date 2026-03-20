@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEQUI - Nova Atividade</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/produtos.css">
+    <link rel="stylesheet" href="../css/atividades.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/theme-light.css">
+    <style>
+        .produto-selector {
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+            padding: 1rem 1.5rem;
+            background: var(--bg-mid);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .produto-selector label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .produto-selector select {
+            flex: 1;
+            min-width: 240px;
+            padding: 0.5rem 0.75rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: var(--body-font);
+            font-size: 0.9rem;
+            border-radius: 6px;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .produto-selector select:focus { border-color: var(--primary); }
+        .nova-ativ-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 900px) { .nova-ativ-layout { grid-template-columns: 1fr; } }
+        .painel-atividades {
+            background: var(--bg-mid);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 420px;
+        }
+        .painel-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .painel-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+        .painel-count { font-size: 0.75rem; color: var(--text-muted); font-family: var(--code-font); }
+        .painel-lista { flex: 1; overflow-y: auto; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
+        .painel-item {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 0.65rem 0.85rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+        .painel-item-info { flex: 1; min-width: 0; }
+        .painel-item-codigo { font-family: var(--code-font); font-size: 0.78rem; font-weight: 700; color: var(--secondary-light); margin-bottom: 0.15rem; }
+        .painel-item-nome { font-size: 0.78rem; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .painel-item-pts { font-family: var(--code-font); font-size: 0.9rem; font-weight: 700; color: var(--success); white-space: nowrap; }
+        .painel-item-remove {
+            background: transparent; border: 1px solid var(--danger); color: var(--danger);
+            border-radius: 4px; padding: 0.1rem 0.4rem; cursor: pointer; font-size: 0.75rem; line-height: 1.4; flex-shrink: 0;
+        }
+        .painel-total {
+            padding: 1rem 1.25rem; border-top: 2px solid var(--border);
+            background: rgba(10,77,60,0.12); border-radius: 0 0 10px 10px;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .painel-total-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; }
+        .painel-total-sub { font-size: 0.7rem; color: var(--text-muted); margin-top: 0.1rem; }
+        .painel-total-pts { font-size: 2rem; font-weight: 700; font-family: var(--code-font); color: var(--accent); }
+        .btn-salvar-ativ {
+            width: 100%; padding: 0.85rem; background: var(--primary); border: none;
+            color: var(--text-primary); font-family: var(--body-font); font-size: 1rem;
+            font-weight: 700; border-radius: 8px; cursor: pointer; transition: background 0.2s; margin-top: 1rem;
+        }
+        .btn-salvar-ativ:hover { background: var(--primary-light); }
+        .btn-salvar-ativ:disabled { opacity: 0.5; cursor: not-allowed; }
+        .pontos-preview {
+            display: none; margin: 0.75rem 0; padding: 0.85rem 1rem;
+            background: rgba(16,185,129,0.1); border: 2px solid var(--success);
+            border-radius: 8px; text-align: center;
+        }
+        .pontos-preview.visible { display: block; }
+        .pontos-valor { font-size: 2rem; font-weight: 700; color: var(--success); font-family: var(--code-font); }
+        .pontos-formula { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.15rem; }
+        .no-produto-msg {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; min-height: 200px; color: var(--text-muted); font-size: 0.9rem;
+            gap: 0.75rem; padding: 2rem; text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon"><img class="logo-img" src="../assets/logo_escura.png" alt="CEQUI"></div>
+                <div class="logo-text">
+                    <h1>CEQUI</h1>
+                    <p>Controle de Produtividade</p>
+                </div>
+            </a>
+            <nav class="header-nav">
+                <a href="../index.html" class="nav-btn">Dashboard</a>
+                <a href="cadastro-produtos.html" class="nav-btn">Novo Produto</a>
+                <a href="lista-produtos.html" class="nav-btn">Lista de Produtos</a>
+                <a href="nova-atividade.html" class="nav-btn active">Nova Atividade</a>
+                <a href="visao-equipe.html" class="nav-btn">Equipe</a>
+                <a href="relatorios.html" class="nav-btn">Relatórios</a>
+                <a href="configuracoes.html" class="nav-btn">Configurações</a>
+                <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
+            </nav>
+            <div class="header-right" id="headerRight"></div>
+            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav"></nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Nova Atividade</h1>
+            <p class="page-subtitle">Adicione atividades a um produto em andamento</p>
+        </div>
+
+        <!-- Seletor de servidor -->
+        <div class="server-selector" id="serverGroup">
+            <div style="display:flex;align-items:center;gap:1.25rem;">
+                <label>SERVIDOR:</label>
+                <select id="serverSelect">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Seletor de produto -->
+        <div class="produto-selector">
+            <label>PRODUTO:</label>
+            <select id="produtoSelect" onchange="selecionarProduto()">
+                <option value="">Selecione um servidor primeiro...</option>
+            </select>
+        </div>
+
+        <!-- Layout principal -->
+        <div class="nova-ativ-layout">
+
+            <!-- Formulário esquerdo -->
+            <div class="card">
+                <h2 class="card-title">Adicionar Atividade</h2>
+
+                <div id="semProdutoMsg" class="no-produto-msg">
+                    <span style="font-size:2rem;">📦</span>
+                    <span>Selecione um produto em andamento para começar</span>
+                </div>
+
+                <div id="formAtividade" style="display:none;">
+
+                    <!-- 1. CATEGORIA (sempre primeiro) -->
+                    <div class="form-group">
+                        <label class="form-label">Categoria <span class="required">*</span></label>
+                        <div class="category-selector" id="categoriaBtns" style="flex-wrap:wrap;gap:0.4rem;"></div>
+                    </div>
+
+                    <!-- Divisor exclusividade -->
+                    <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:0.75rem;margin:1.25rem 0;">
+                        <div style="height:1px;background:var(--border);"></div>
+                        <div style="font-size:0.7rem;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;white-space:nowrap;">escolha uma opção</div>
+                        <div style="height:1px;background:var(--border);"></div>
+                    </div>
+
+                    <!-- 2a. DESCRIÇÃO LIVRE -->
+                    <div class="form-group" id="groupDescricao">
+                        <label class="form-label">Descrição da Atividade
+                            <span style="color:var(--text-muted);font-size:0.75rem;margin-left:0.5rem;">atividade fora do padrão</span>
+                        </label>
+                        <input type="text" class="form-input" id="descricaoLivre"
+                               placeholder="Descreva a atividade realizada..."
+                               oninput="onDescricaoLivreInput(this.value)">
+                    </div>
+
+                    <!-- OU -->
+                    <div style="text-align:center;margin:0.5rem 0 1rem;">
+                        <span style="font-size:0.75rem;font-weight:700;color:var(--text-muted);background:var(--bg-mid);padding:0.2rem 0.75rem;border:1px solid var(--border);border-radius:20px;">OU</span>
+                    </div>
+
+                    <!-- 2b. ATIVIDADE PADRÃO -->
+                    <div class="form-group" id="groupPadrao">
+                        <label class="form-label">
+                            Atividade Padrão
+                            <span style="color:var(--text-muted);font-size:0.75rem;margin-left:0.5rem;" id="countAtivs"></span>
+                        </label>
+                        <select class="form-select" id="atividadePadrao" onchange="selecionarAtividade()">
+                            <option value="">Selecione uma atividade...</option>
+                        </select>
+                    </div>
+
+                    <div id="atividadeInfo" style="display:none;margin-bottom:1rem;padding:1rem;background:var(--bg-dark);border-radius:8px;border:1px solid var(--border);">
+                        <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:0.4rem;">ATIVIDADE SELECIONADA</div>
+                        <div style="font-weight:600;margin-bottom:0.4rem;font-size:0.9rem;" id="infoDescricao"></div>
+                        <div style="display:flex;gap:1.5rem;flex-wrap:wrap;">
+                            <span style="font-size:0.82rem;">Código: <strong id="infoCodigo" style="font-family:var(--code-font);color:var(--secondary-light);"></strong></span>
+                            <span style="font-size:0.82rem;">Peso: <strong id="infoPeso" style="color:var(--warning);"></strong></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">
+                            Complexidade (multiplicador) <span class="required">*</span>
+                            <span style="color:var(--text-muted);font-size:0.75rem;margin-left:0.5rem;">Pontos = Peso × Complexidade</span>
+                        </label>
+                        <div class="complexity-selector" id="complexidadeBtns"></div>
+                    </div>
+                    <div class="pontos-preview" id="pontosPreview">
+                        <div style="font-size:0.8rem;color:var(--text-secondary);margin-bottom:0.2rem;">Pontos Calculados</div>
+                        <div class="pontos-valor" id="pontosValor">0</div>
+                        <div class="pontos-formula" id="pontosFormula"></div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Observação da atividade</label>
+                        <input type="text" class="form-input" id="obsAtividade"
+                               placeholder="Descrição resumida do que foi feito...">
+                    </div>
+                    <button class="btn-salvar-ativ" onclick="adicionarAtividade()">Salvar/Adicionar</button>
+                </div>
+            </div>
+
+            <!-- Painel direito -->
+            <div class="painel-atividades">
+                <div class="painel-header">
+                    <h3>Atividades</h3>
+                    <span class="painel-count" id="painelCount">0 itens</span>
+                </div>
+                <div class="painel-lista" id="painelLista">
+                    <div class="no-produto-msg">
+                        <span style="font-size:2rem;">📝</span>
+                        <span>Nenhuma atividade adicionada</span>
+                    </div>
+                </div>
+                <div class="painel-total">
+                    <div>
+                        <div class="painel-total-label">Total de Pontos</div>
+                        <div class="painel-total-sub" id="painelSub">0 atividades</div>
+                    </div>
+                    <div class="painel-total-pts" id="painelTotal">0</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema"></button>
+
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/export.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/nova-atividade.js"></script>
+    <script src="../js/theme.js"></script>
+
+    <script>
+    function toggleMobileNav() {
+        document.getElementById('mobileNav').classList.toggle('open');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const headerNav = document.querySelector('.header-nav');
+            const headerRight = document.querySelector('.header-right');
+            const mobileNav = document.getElementById('mobileNav');
+            if (headerNav && mobileNav) {
+                mobileNav.innerHTML = headerNav.innerHTML;
+                if (headerRight && headerRight.innerHTML.trim()) {
+                    const sep = document.createElement('div');
+                    sep.style.cssText = 'border-top:1px solid var(--border);margin:0.3rem 0;';
+                    mobileNav.appendChild(sep);
+                    const rc = headerRight.cloneNode(true);
+                    rc.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.25rem 0;';
+                    mobileNav.appendChild(rc);
+                }
+            }
+        }, 300);
+    });
+    </script>
+</body>
+</html>

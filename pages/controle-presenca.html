@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CEQUI - Presença</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/theme.css">
+    <link rel="stylesheet" href="../css/theme-light.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <style>
+        /* ── Abas ─────────────────────────────────────── */
+        .tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+        .tab-btn {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            color: var(--text-muted);
+            font-family: var(--body-font);
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+        .tab-btn:hover { color: var(--text-primary); }
+        .tab-btn.active {
+            color: var(--primary-light);
+            border-bottom-color: var(--primary);
+        }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* ── Calendário ───────────────────────────────── */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.4rem;
+            margin-top: 0.75rem;
+            max-width: 700px;
+        }
+        .calendar-header {
+            text-align: center;
+            padding: 0.2rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            padding: 0.1rem;
+            position: relative;
+        }
+        .calendar-day:hover { border-color: var(--primary); transform: scale(1.08); }
+        .calendar-day.hoje { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(16,185,129,0.2); }
+        .calendar-day.trabalhado { background: rgba(16,185,129,0.2); border-color: var(--success); }
+        .calendar-day.feriado    { background: rgba(239,68,68,0.2);  border-color: var(--danger); }
+        .calendar-day.ausente    { background: rgba(245,158,11,0.2); border-color: var(--warning); }
+        .calendar-day.dispensa   { background: rgba(59,130,246,0.2);  border-color: #3B82F6; }
+        .calendar-day.fim-semana { background: var(--bg-dark); opacity: 0.5; cursor: not-allowed; }
+        .day-number  { font-size: 0.7rem; font-weight: 700; font-family: var(--code-font); color: var(--text-primary); }
+        .day-status  { font-size: 0.55rem; margin-top: 0.05rem; text-align: center; color: var(--text-secondary); }
+
+        /* ── Tooltip de feriado ───────────────────────── */
+        .calendar-day.has-tooltip { position: relative; }
+        .calendar-day.has-tooltip::after {
+            content: attr(data-feriado);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 1px solid var(--danger);
+            border-radius: 6px;
+            padding: 0.35rem 0.65rem;
+            font-size: 0.72rem;
+            font-weight: 600;
+            white-space: nowrap;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.18s ease;
+            z-index: 9999;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+        }
+        .calendar-day.has-tooltip::before {
+            content: '';
+            position: absolute;
+            bottom: calc(100% + 2px);
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: var(--danger);
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.18s ease;
+            z-index: 9999;
+        }
+        .calendar-day.has-tooltip:hover::after,
+        .calendar-day.has-tooltip:hover::before { opacity: 1; }
+
+        /* ── Seletor de mês ───────────────────────────── */
+        .month-selector {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--bg-dark);
+            border-radius: 8px;
+        }
+        .month-nav { display: flex; gap: 0.75rem; align-items: center; }
+        .month-nav select {
+            padding: 0.45rem 0.75rem;
+            background: var(--bg-mid);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: var(--code-font);
+            font-size: 0.95rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .month-nav select:focus { outline: none; border-color: var(--primary); }
+
+        /* ── Resumo cards ─────────────────────────────── */
+        .resumo-mes {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 0.4rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+        }
+        .resumo-card {
+            background: var(--bg-mid);
+            padding: 0.5rem 0.6rem;
+            border-radius: 6px;
+            border: 2px solid var(--border);
+            flex: 1;
+            min-width: 0;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .resumo-label { font-size: 0.6rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.3px; margin-bottom: 0.2rem; overflow: hidden; text-overflow: ellipsis; }
+        .resumo-value { font-size: 1.3rem; font-weight: 700; font-family: var(--code-font); color: var(--text-primary); }
+
+        /* ── Legenda ──────────────────────────────────── */
+        .legend { display: flex; gap: 1.5rem; flex-wrap: wrap; margin-top: 2rem; padding: 1rem; background: var(--bg-dark); border-radius: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+        .legend-box  { width: 20px; height: 20px; border-radius: 4px; border: 2px solid; }
+
+        /* ── Histórico ─────────────────────────────────── */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .stat-box {
+            padding: 1.25rem;
+            border-radius: 8px;
+            border: 2px solid var(--border);
+            background: var(--bg-dark);
+            text-align: center;
+        }
+        .stat-box-label { font-size: 0.78rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+        .stat-box-value { font-size: 2rem; font-weight: 700; font-family: var(--code-font); }
+
+        /* ── Responsivo ────────────────────────────────── */
+        @media (max-width: 768px) {
+            .resumo-mes { flex-wrap: wrap; }
+            .resumo-card { flex: 1 1 calc(25% - 0.4rem); min-width: 70px; }
+            .month-selector { flex-direction: column; gap: 0.75rem; align-items: stretch; }
+            .month-nav { justify-content: center; }
+            .calendar-grid { max-width: 100%; }
+            .legend { gap: 0.75rem; }
+            .tab-btn { padding: 0.6rem 1rem; font-size: 0.82rem; }
+        }
+        @media (max-width: 480px) {
+            .resumo-card { flex: 1 1 calc(33% - 0.4rem); }
+            .month-nav select { font-size: 0.85rem; padding: 0.35rem 0.5rem; }
+            .day-number { font-size: 0.6rem; }
+            .day-status { font-size: 0.45rem; }
+        }
+
+        /* ── Painel de Range de Ausência ──────────────── */
+        .range-ausencia-panel {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1rem 1.25rem;
+            margin-bottom: 1.25rem;
+        }
+        .range-ausencia-panel h4 {
+            color: var(--text-primary);
+            font-size: 0.88rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .range-ausencia-fields {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            gap: 0.75rem;
+        }
+        .range-field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.3rem;
+        }
+        .range-field label {
+            font-size: 0.72rem;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        .range-field input[type="date"] {
+            padding: 0.45rem 0.65rem;
+            background: var(--bg-mid);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: var(--code-font);
+            font-size: 0.88rem;
+            border-radius: 6px;
+            cursor: pointer;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+        .range-field input[type="date"]:focus {
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+        }
+        .range-field select {
+            padding: 0.45rem 0.65rem;
+            background: var(--bg-mid);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            font-family: var(--body-font);
+            font-size: 0.88rem;
+            border-radius: 6px;
+            cursor: pointer;
+            outline: none;
+        }
+        .btn-range-apply {
+            padding: 0.5rem 1.25rem;
+            background: var(--primary);
+            border: 1px solid var(--primary-light);
+            color: #d4f4e8;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .btn-range-apply:hover {
+            background: var(--primary-light);
+            box-shadow: 0 4px 14px var(--primary-glow);
+        }
+        .btn-limpar-mes {
+            padding: 0.5rem 1.1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1.5px solid var(--danger);
+            color: var(--danger);
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .btn-limpar-mes:hover {
+            background: rgba(239, 68, 68, 0.25);
+        }
+        @media (max-width: 600px) {
+            .range-ausencia-fields { flex-direction: column; align-items: stretch; }
+            .btn-range-apply, .btn-limpar-mes { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <a href="../index.html" class="logo">
+                <div class="logo-icon"><img class="logo-img" src="../assets/logo_escura.png" alt="CEQUI"></div>
+                <div class="logo-text">
+                    <h1>CEQUI</h1>
+                    <p>Controle de Produtividade</p>
+                </div>
+            </a>
+            <nav class="header-nav">
+                <a href="../index.html" class="nav-btn">Dashboard</a>
+                <a href="cadastro-produtos.html" class="nav-btn">Novo Produto</a>
+                <a href="lista-produtos.html" class="nav-btn">Lista de Produtos</a>
+                <a href="nova-atividade.html" class="nav-btn">Nova Atividade</a>
+                <a href="visao-equipe.html" class="nav-btn">Equipe</a>
+                <a href="relatorios.html" class="nav-btn">Relatórios</a>
+                <a href="configuracoes.html" class="nav-btn active">Configurações</a>
+                <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
+            </nav>
+            <div class="header-right" id="headerRight"></div>
+            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+    <nav class="mobile-nav" id="mobileNav"></nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1 class="page-title">Presença</h1>
+            <p class="page-subtitle">Registre dias trabalhados e consulte seu histórico</p>
+        </div>
+
+        <div class="server-selector" id="serverGroup">
+            <label for="serverSelect">Servidor:</label>
+            <select id="serverSelect">
+                <option value="">Carregando...</option>
+            </select>
+        </div>
+
+        <!-- Abas -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="trocarAba('registro', this)">📅 Registrar Dias</button>
+            <button class="tab-btn"        onclick="trocarAba('historico', this)">📊 Histórico</button>
+        </div>
+
+        <!-- ABA: Registro -->
+        <div id="tab-registro" class="tab-panel active">
+            <div class="card">
+                <div class="resumo-mes" id="resumoMes">
+                    <div class="resumo-card">
+                        <div class="resumo-label">Dias Úteis</div>
+                        <div class="resumo-value" id="diasUteisMes">-</div>
+                    </div>
+                    <div class="resumo-card" style="border-color: var(--success);">
+                        <div class="resumo-label">Trabalhados</div>
+                        <div class="resumo-value" style="color: var(--success);" id="diasTrabalhados">-</div>
+                    </div>
+                    <div class="resumo-card" style="border-color: var(--warning);">
+                        <div class="resumo-label">Ausências</div>
+                        <div class="resumo-value" style="color: var(--warning);" id="ausenciasJustificadas">-</div>
+                    </div>
+                    <div class="resumo-card" style="border-color: #3B82F6;">
+                        <div class="resumo-label">Dispensas</div>
+                        <div class="resumo-value" style="color: var(--info);" id="dispensas">-</div>
+                    </div>
+                </div>
+
+                <div class="month-selector">
+                    <div class="month-nav">
+                        <select id="selectMes" onchange="mudarPorSelect()">
+                            <option value="0">Janeiro</option><option value="1">Fevereiro</option>
+                            <option value="2">Março</option><option value="3">Abril</option>
+                            <option value="4">Maio</option><option value="5">Junho</option>
+                            <option value="6">Julho</option><option value="7">Agosto</option>
+                            <option value="8">Setembro</option><option value="9">Outubro</option>
+                            <option value="10">Novembro</option><option value="11">Dezembro</option>
+                        </select>
+                        <select id="selectAno" onchange="mudarPorSelect()"></select>
+                    </div>
+
+                </div>
+
+                <!-- Range de Ausência Justificada -->
+                <div class="range-ausencia-panel">
+                    <h4>Registrar por Período</h4>
+                    <div class="range-ausencia-fields">
+                        <div class="range-field">
+                            <label>Data Início</label>
+                            <input type="date" id="rangeInicio" />
+                        </div>
+                        <div class="range-field">
+                            <label>Data Fim</label>
+                            <input type="date" id="rangeFim" />
+                        </div>
+                        <div class="range-field">
+                            <label>Tipo</label>
+                            <select id="rangeTipo">
+                                <option value="ausente">Ausência Justificada</option>
+                                <option value="dispensa">Dispensa</option>
+                                <option value="trabalhado">Trabalhado</option>
+                            </select>
+                        </div>
+                        <button class="btn-range-apply" onclick="aplicarRange()">Aplicar Período</button>
+                        <button class="btn-limpar-mes" onclick="limparMesTodo()">🗑️ Limpar Mês</button>
+                    </div>
+                </div>
+
+                <div class="calendar-grid" id="calendar"></div>
+
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-box" style="background:rgba(16,185,129,0.2);border-color:var(--success);"></div><span>Trabalhado</span></div>
+                    <div class="legend-item"><div class="legend-box" style="background:var(--bg-dark);border-color:var(--border);opacity:0.5;"></div><span>Fim de Semana</span></div>
+                    <div class="legend-item"><div class="legend-box" style="background:rgba(239,68,68,0.2);border-color:var(--danger);"></div><span>Feriado</span></div>
+                    <div class="legend-item"><div class="legend-box" style="background:rgba(245,158,11,0.2);border-color:var(--warning);"></div><span>Ausência Justificada</span></div>
+                    <div class="legend-item"><div class="legend-box" style="background:rgba(59,130,246,0.2);border-color:#3B82F6;"></div><span>Dispensa</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ABA: Histórico -->
+        <div id="tab-historico" class="tab-panel">
+            <div class="stat-grid" id="estatisticasGerais">
+                <div class="stat-box">
+                    <div class="stat-box-label">Meses Registrados</div>
+                    <div class="stat-box-value" id="totalMeses">0</div>
+                </div>
+                <div class="stat-box" style="border-color:var(--success);background:rgba(16,185,129,0.1);">
+                    <div class="stat-box-label">Total Dias Trabalhados</div>
+                    <div class="stat-box-value" style="color:var(--success);" id="totalDiasTrabalhados">0</div>
+                </div>
+                <div class="stat-box" style="border-color:var(--warning);background:rgba(245,158,11,0.1);">
+                    <div class="stat-box-label">Total Ausências</div>
+                    <div class="stat-box-value" style="color:var(--warning);" id="totalAusencias">0</div>
+                </div>
+                <div class="stat-box" style="border-color:var(--accent);background:rgba(16,185,129,0.05);">
+                    <div class="stat-box-label">Taxa Média de Presença</div>
+                    <div class="stat-box-value" style="color:var(--accent);" id="taxaMedia">0%</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="table-header">
+                    <h2 class="table-title">Histórico Mensal</h2>
+                    <button class="btn btn-primary" onclick="exportarRelatorio()">📊 Exportar CSV</button>
+                </div>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Mês/Ano</th>
+                                <th>Dias Úteis</th>
+                                <th>Trabalhados</th>
+                                <th>Ausências</th>
+                                <th>Dispensas</th>
+                                <th>Taxa de Presença</th>
+                                <th>Produtividade Média</th>
+                            </tr>
+                        </thead>
+                        <tbody id="relatorioTable">
+                            <tr>
+                                <td colspan="7" class="empty-state">
+                                    <div class="empty-state-icon">📅</div>
+                                    <p>Nenhum mês registrado</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema"></button>
+
+    <script src="../js/mock-data.js"></script>
+    <script src="../js/app.js"></script>
+    <script src="../js/notifications.js"></script>
+    <script src="../js/storage.js"></script>
+    <script src="../js/api-client.js"></script>
+    <script src="../js/export.js"></script>
+    <script src="../js/controle-presenca.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/relatorio-presenca.js"></script>
+    <script src="../js/theme.js"></script>
+    <script>
+    function trocarAba(aba, btnEl) {
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + aba).classList.add('active');
+        btnEl.classList.add('active');
+        // Ao abrir histórico, recarregar dados
+        if (aba === 'historico' && typeof carregarRelatorio === 'function') {
+            carregarRelatorio();
+        }
+    }
+
+    function toggleMobileNav() {
+        document.getElementById('mobileNav').classList.toggle('open');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            const headerNav = document.querySelector('.header-nav');
+            const headerRight = document.querySelector('.header-right');
+            const mobileNav = document.getElementById('mobileNav');
+            if (headerNav && mobileNav) {
+                mobileNav.innerHTML = headerNav.innerHTML;
+                if (headerRight && headerRight.innerHTML.trim()) {
+                    const sep = document.createElement('div');
+                    sep.style.cssText = 'border-top:1px solid var(--border);margin:0.3rem 0;';
+                    mobileNav.appendChild(sep);
+                    const rc = headerRight.cloneNode(true);
+                    rc.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.25rem 0;';
+                    mobileNav.appendChild(rc);
+                }
+            }
+        }, 200);
+    });
+    </script>
+</body>
+</html>

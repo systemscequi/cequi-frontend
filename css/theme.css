@@ -1,0 +1,136 @@
+/**
+ * CEQUI — Variáveis de Tema
+ * Tema escuro (padrão) e tema claro — versão anterior restaurada
+ */
+
+/* ══ TEMA ESCURO (padrão) ══════════════════════════════════════════ */
+:root,
+[data-theme="dark"] {
+    --primary:        #0A4D3C;
+    --primary-light:  #0E6B52;
+    --primary-dark:   #063328;
+    --primary-glow:   rgba(14, 107, 82, 0.18);
+
+    --secondary:      #C96A00;
+    --secondary-light:#E8860A;
+    --secondary-glow: rgba(201, 106, 0, 0.15);
+
+    --accent:         #10B981;
+    --accent-soft:    rgba(16, 185, 129, 0.12);
+
+    --bg-base:   #0F1419;
+    --bg-dark:   #0F1419;
+    --bg-mid:    #1A202C;
+    --bg-light:  #2D3748;
+    --bg-card:   #1A202C;
+
+    --text-primary:   #F7FAFC;
+    --text-secondary: #A0AEC0;
+    --text-muted:     #718096;
+
+    --border:         #2D3748;
+    --border-subtle:  #243040;
+
+    --success: #10B981;
+    --warning: #F59E0B;
+    --danger:  #EF4444;
+    --info:    #3B82F6;
+
+    --success-bg: rgba(16, 185, 129, 0.12);
+    --warning-bg: rgba(245, 158, 11, 0.12);
+    --danger-bg:  rgba(239, 68, 68, 0.12);
+
+    --code-font: 'JetBrains Mono', monospace;
+    --body-font: 'Work Sans', sans-serif;
+
+    --shadow-sm:   0 1px 4px rgba(0,0,0,0.4);
+    --shadow-md:   0 4px 16px rgba(0,0,0,0.5);
+    --shadow-lg:   0 8px 32px rgba(0,0,0,0.6);
+    --shadow-glow: 0 0 24px rgba(14,107,82,0.20);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+}
+
+/* ══ TEMA CLARO ═════════════════════════════════════════════════════ */
+[data-theme="light"] {
+    --primary:        #0A4D3C;
+    --primary-light:  #0D6B4F;
+    --primary-dark:   #073429;
+    --primary-glow:   rgba(10, 77, 60, 0.10);
+
+    --secondary:      #D97706;
+    --secondary-light:#F59E0B;
+    --secondary-glow: rgba(217, 119, 6, 0.12);
+
+    --accent:         #059669;
+    --accent-soft:    rgba(5, 150, 105, 0.10);
+
+    --bg-base:  #F7FAFC;
+    --bg-dark:  #F7FAFC;
+    --bg-mid:   #FFFFFF;
+    --bg-light: #E2E8F0;
+    --bg-card:  #FFFFFF;
+
+    --text-primary:   #1A202C;
+    --text-secondary: #4A5568;
+    --text-muted:     #718096;
+
+    --border:        #CBD5E0;
+    --border-subtle: #E2E8F0;
+
+    --success: #059669;
+    --warning: #D97706;
+    --danger:  #DC2626;
+    --info:    #2563EB;
+
+    --success-bg: rgba(5, 150, 105, 0.08);
+    --warning-bg: rgba(217, 119, 6, 0.10);
+    --danger-bg:  rgba(220, 38, 38, 0.10);
+
+    --shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md:   0 4px 12px rgba(0,0,0,0.10);
+    --shadow-lg:   0 8px 24px rgba(0,0,0,0.12);
+    --shadow-glow: 0 0 20px rgba(10,77,60,0.12);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+}
+
+/* ══ BOTÃO TOGGLE DE TEMA ══════════════════════════════════════════ */
+.theme-toggle {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    font-size: 1.25rem;
+    cursor: pointer;
+    box-shadow: var(--shadow-md);
+    transition: transform 0.15s, box-shadow 0.2s;
+    z-index: 9998;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; line-height: 1;
+    border: none;
+}
+/* No tema escuro — botão com fundo âmbar (sol quente) */
+[data-theme="dark"] .theme-toggle {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.4);
+}
+[data-theme="dark"] .theme-toggle:hover {
+    transform: scale(1.12);
+    box-shadow: 0 6px 22px rgba(245, 158, 11, 0.6);
+}
+/* No tema claro — botão com fundo azul-noite (lua fria) */
+[data-theme="light"] .theme-toggle {
+    background: linear-gradient(135deg, #1E3A5F, #0D2B5E);
+    box-shadow: 0 4px 16px rgba(13, 43, 94, 0.35);
+}
+[data-theme="light"] .theme-toggle:hover {
+    transform: scale(1.12);
+    box-shadow: 0 6px 22px rgba(13, 43, 94, 0.55);
+}
+.theme-toggle:active { transform: scale(0.95); }
