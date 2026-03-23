@@ -660,6 +660,33 @@ class MockAPI {
     }
 }
 
+const MOCK_FERIADOS = [
+    { id: 1,  data: '2025-01-01', nome: 'Ano Novo',                    tipo: 'nacional' },
+    { id: 2,  data: '2025-03-03', nome: 'Carnaval',                    tipo: 'ponto-facultativo' },
+    { id: 3,  data: '2025-03-04', nome: 'Carnaval',                    tipo: 'ponto-facultativo' },
+    { id: 4,  data: '2025-04-18', nome: 'Sexta-feira Santa',           tipo: 'nacional' },
+    { id: 5,  data: '2025-04-21', nome: 'Tiradentes',                  tipo: 'nacional' },
+    { id: 6,  data: '2025-05-01', nome: 'Dia do Trabalho',             tipo: 'nacional' },
+    { id: 7,  data: '2025-06-19', nome: 'Corpus Christi',              tipo: 'ponto-facultativo' },
+    { id: 8,  data: '2025-09-07', nome: 'Independência do Brasil',     tipo: 'nacional' },
+    { id: 9,  data: '2025-10-12', nome: 'Nossa Senhora Aparecida',     tipo: 'nacional' },
+    { id: 10, data: '2025-11-02', nome: 'Finados',                     tipo: 'nacional' },
+    { id: 11, data: '2025-11-15', nome: 'Proclamação da República',    tipo: 'nacional' },
+    { id: 12, data: '2025-12-25', nome: 'Natal',                       tipo: 'nacional' },
+    { id: 13, data: '2026-01-01', nome: 'Ano Novo',                    tipo: 'nacional' },
+    { id: 14, data: '2026-02-16', nome: 'Carnaval',                    tipo: 'ponto-facultativo' },
+    { id: 15, data: '2026-02-17', nome: 'Carnaval',                    tipo: 'ponto-facultativo' },
+    { id: 16, data: '2026-04-03', nome: 'Sexta-feira Santa',           tipo: 'nacional' },
+    { id: 17, data: '2026-04-21', nome: 'Tiradentes',                  tipo: 'nacional' },
+    { id: 18, data: '2026-05-01', nome: 'Dia do Trabalho',             tipo: 'nacional' },
+    { id: 19, data: '2026-06-04', nome: 'Corpus Christi',              tipo: 'ponto-facultativo' },
+    { id: 20, data: '2026-09-07', nome: 'Independência do Brasil',     tipo: 'nacional' },
+    { id: 21, data: '2026-10-12', nome: 'Nossa Senhora Aparecida',     tipo: 'nacional' },
+    { id: 22, data: '2026-11-02', nome: 'Finados',                     tipo: 'nacional' },
+    { id: 23, data: '2026-11-15', nome: 'Proclamação da República',    tipo: 'nacional' },
+    { id: 24, data: '2026-12-25', nome: 'Natal',                       tipo: 'nacional' },
+];
+
 // ========== EXPORTAÇÕES ==========
 window.MOCK_COLABORADORES       = MOCK_COLABORADORES;
 window.MOCK_PRODUTOS_INICIAIS  = MOCK_PRODUTOS_INICIAIS;
