@@ -348,10 +348,6 @@ if (_currentPage === "login.html") {
             var btn = form.querySelector("button[type=submit]");
             btn.disabled = true;
 
-            // Auth.login pode retornar Promise (backend) ou objeto síncrono (mock)
-            var loginResult = Auth.login(ponto, senha);
-            var isPromise = loginResult && typeof loginResult.then === 'function';
-
             function handleResult(result) {
                 if (result.success) {
                     window.location.href = "index.html";
@@ -368,15 +364,25 @@ if (_currentPage === "login.html") {
                 }
             }
 
-            if (isPromise) {
-                loginResult.then(handleResult).catch(function(err) {
+            // Usar BackendAuth se disponível (backend real), senão usar mock local
+            if (window.BackendAuth) {
+                window.BackendAuth.login(ponto, senha).then(handleResult).catch(function() {
                     btn.textContent = "🔓 Entrar no Sistema";
                     btn.disabled = false;
                     var errEl = document.getElementById("loginError");
                     if (errEl) { errEl.textContent = "Erro de conexão com o servidor."; errEl.style.display = "flex"; }
                 });
             } else {
-                handleResult(loginResult);
+                var loginResult = Auth.login(ponto, senha);
+                var isPromise = loginResult && typeof loginResult.then === 'function';
+                if (isPromise) {
+                    loginResult.then(handleResult).catch(function() {
+                        btn.textContent = "🔓 Entrar no Sistema";
+                        btn.disabled = false;
+                    });
+                } else {
+                    handleResult(loginResult);
+                }
             }
         });
 
