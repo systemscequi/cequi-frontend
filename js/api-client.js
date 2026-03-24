@@ -1,15 +1,10 @@
 /**
  * CEQUI — API Client
  * Substitui o MockAPI por chamadas HTTP reais ao backend Node.js.
- * Mantém exatamente a mesma interface do MockAPI.
- * Usa localStorage como cache — o banco é a fonte de verdade.
  */
 
 (function () {
 
-    // URL base do backend
-    // Desenvolvimento: 'http://localhost:3000/api'
-    // Produção: URL do Render
     var BASE_URL = 'https://cequi-backend.onrender.com/api';
 
     // ── Helpers ──────────────────────────────────────────────────────────
@@ -17,32 +12,42 @@
         return sessionStorage.getItem('cequi_token') || null;
     }
 
-    function headers() {
+    function makeHeaders() {
         var h = { 'Content-Type': 'application/json' };
         var t = getToken();
         if (t) h['Authorization'] = 'Bearer ' + t;
         return h;
     }
 
+    // Requisição padrão — redireciona para login em caso de 401
     async function req(method, path, body) {
-        var opts = { method: method, headers: headers() };
-        if (body !== undefined) opts.body = JSON.stringify(body);
-        var res  = await fetch(BASE_URL + path, opts);
-        var data = await res.json();
-        if (res.status === 401) {
-            sessionStorage.removeItem('cequi_session');
-            sessionStorage.removeItem('cequi_token');
-            var inPages = window.location.pathname.includes('/pages/');
-            window.location.href = inPages ? '../login.html' : 'login.html';
-            return { success: false, message: 'Sessão expirada.' };
+        try {
+            var opts = { method: method, headers: makeHeaders() };
+            if (body !== undefined) opts.body = JSON.stringify(body);
+            var res  = await fetch(BASE_URL + path, opts);
+            var data = await res.json();
+            if (res.status === 401) {
+                // Só redireciona se NÃO estiver já na página de login
+                var pg = window.location.pathname.split('/').pop();
+                if (pg !== 'login.html') {
+                    sessionStorage.removeItem('cequi_session');
+                    sessionStorage.removeItem('cequi_token');
+                    var inPages = window.location.pathname.includes('/pages/');
+                    window.location.href = inPages ? '../login.html' : 'login.html';
+                }
+                return { success: false, message: 'Sessão expirada.' };
+            }
+            return data;
+        } catch (e) {
+            console.error('Erro na requisição:', path, e.message);
+            return { success: false, message: 'Erro de conexão.' };
         }
-        return data;
     }
 
-    // Versão silenciosa — não redireciona em caso de 401 (usada no cache init)
+    // Requisição silenciosa — nunca redireciona, nunca lança erro
     async function reqSilent(method, path, body) {
         try {
-            var opts = { method: method, headers: headers() };
+            var opts = { method: method, headers: makeHeaders() };
             if (body !== undefined) opts.body = JSON.stringify(body);
             var res  = await fetch(BASE_URL + path, opts);
             if (!res.ok) return { success: false };
@@ -52,10 +57,14 @@
         }
     }
 
-    // ── Login ─────────────────────────────────────────────────────────────
-    async function login(ponto, senha) {
-        var data = await req('POST', '/colaboradores/login', { ponto: parseInt(ponto), senha: senha });
-        if (data.success && data.token && data.usuario) {
+    // ── Login — usa reqSilent para não causar redirect loop ───────────────
+    async function fazerLogin(ponto, senha) {
+        var data = await reqSilent('POST', '/colaboradores/login', {
+            ponto: parseInt(ponto),
+            senha: senha
+        });
+
+        if (data && data.success && data.token && data.usuario) {
             var u = data.usuario;
             var session = {
                 userId:    u.id,
@@ -66,47 +75,48 @@
                 loginTime: new Date().toISOString(),
                 expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString()
             };
-            // Usar o mesmo mecanismo do AuthManager original
             sessionStorage.setItem('cequi_session', JSON.stringify(session));
             sessionStorage.setItem('cequi_token',   data.token);
             if (typeof CurrentServer !== 'undefined') CurrentServer.set(u);
+            return { success: true, usuario: u, session: session };
         }
-        return data;
+
+        return {
+            success: false,
+            message: (data && data.message) ? data.message : 'Credenciais inválidas.'
+        };
     }
 
-    // ── Inicialização: popular cache com dados do banco ───────────────────
+    // ── Cache inicial ─────────────────────────────────────────────────────
     async function inicializarCache() {
-        var token = getToken();
-        if (!token) return;
-
+        if (!getToken()) return;
         try {
-            var session = JSON.parse(sessionStorage.getItem('cequi_session') || '{}');
-            var isAdmin = session.role === 'admin';
+            var session = {};
+            try { session = JSON.parse(sessionStorage.getItem('cequi_session') || '{}'); } catch(e) {}
 
-            // Usa reqSilent para não redirecionar em caso de 401
-            var colsUrl = isAdmin ? '/colaboradores/todos' : '/colaboradores';
+            var colsUrl = session.role === 'admin' ? '/colaboradores/todos' : '/colaboradores';
             var cols = await reqSilent('GET', colsUrl);
-            if (cols.success) DataStore.cacheColaboradores(cols.data);
+            if (cols && cols.success && cols.data) DataStore.cacheColaboradores(cols.data);
 
             var fers = await reqSilent('GET', '/feriados');
-            if (fers.success) DataStore.cacheFeriados(fers.data);
+            if (fers && fers.success && fers.data) DataStore.cacheFeriados(fers.data);
 
             if (session.userId) {
                 var pres = await reqSilent('GET', '/presencas/' + session.userId);
-                if (pres.success) DataStore.cachePresenca(session.userId, pres.data);
+                if (pres && pres.success && pres.data) DataStore.cachePresenca(session.userId, pres.data);
             }
 
             console.log('✅ Cache sincronizado com o banco');
         } catch (e) {
-            console.warn('⚠️ Falha ao sincronizar cache:', e.message);
+            console.warn('⚠️ Cache sync falhou:', e.message);
         }
     }
 
-    // ── Substituição do MockAPI ───────────────────────────────────────────
+    // ── MockAPI overrides ─────────────────────────────────────────────────
 
     MockAPI.getColaboradores = async function () {
         var data = await req('GET', '/colaboradores');
-        if (data.success) DataStore.cacheColaboradores(data.data);
+        if (data && data.success) DataStore.cacheColaboradores(data.data);
         return data;
     };
     MockAPI.getColaborador = async function (id) {
@@ -114,7 +124,7 @@
     };
     MockAPI.createColaborador = async function (data) {
         var result = await req('POST', '/colaboradores', data);
-        if (result.success) {
+        if (result && result.success && result.data) {
             var cols = DataStore.getColaboradores();
             cols.push(result.data);
             DataStore.cacheColaboradores(cols);
@@ -123,19 +133,19 @@
     };
     MockAPI.updateColaborador = async function (id, data) {
         var result = await req('PUT', '/colaboradores/' + id, data);
-        if (result.success) DataStore.updateColaborador(id, data);
+        if (result && result.success) DataStore.updateColaborador(id, data);
         return result;
     };
     MockAPI.deleteColaborador = async function (id) {
         var result = await req('DELETE', '/colaboradores/' + id);
-        if (result.success) DataStore.deleteColaborador(id);
+        if (result && result.success) DataStore.deleteColaborador(id);
         return result;
     };
 
     MockAPI.getProdutos = async function (servidorId) {
-        var qs   = servidorId ? '?servidorId=' + servidorId : '';
+        var qs = servidorId ? '?servidorId=' + servidorId : '';
         var data = await req('GET', '/produtos' + qs);
-        if (data.success) DataStore.cacheProdutos(data.data);
+        if (data && data.success) DataStore.cacheProdutos(data.data);
         return data;
     };
     MockAPI.getProduto = async function (id) {
@@ -143,7 +153,7 @@
     };
     MockAPI.createProduto = async function (data) {
         var result = await req('POST', '/produtos', data);
-        if (result.success) {
+        if (result && result.success && result.data) {
             var lista = DataStore.getProdutos();
             lista.push(result.data);
             DataStore.cacheProdutos(lista);
@@ -152,19 +162,18 @@
     };
     MockAPI.updateProduto = async function (id, data) {
         var result = await req('PUT', '/produtos/' + id, data);
-        if (result.success) DataStore.updateProduto(id, result.data || data);
+        if (result && result.success) DataStore.updateProduto(id, result.data || data);
         return result;
     };
     MockAPI.deleteProduto = async function (id) {
         var result = await req('DELETE', '/produtos/' + id);
-        if (result.success) DataStore.deleteProduto(id);
+        if (result && result.success) DataStore.deleteProduto(id);
         return result;
     };
 
     MockAPI.getAtividades = async function (categoria) {
-        var qs   = categoria ? '?categoria=' + categoria : '';
-        var data = await req('GET', '/atividades' + qs);
-        return data;
+        var qs = categoria ? '?categoria=' + categoria : '';
+        return await req('GET', '/atividades' + qs);
     };
     MockAPI.createAtividade = async function (data) {
         return await req('POST', '/atividades', data);
@@ -178,27 +187,25 @@
 
     MockAPI.getFeriados = async function () {
         var data = await req('GET', '/feriados');
-        if (data.success) DataStore.cacheFeriados(data.data);
+        if (data && data.success) DataStore.cacheFeriados(data.data);
         return data;
     };
 
-    // ── Presença ──────────────────────────────────────────────────────────
     MockAPI.getPresenca = async function (servidorId) {
         var data = await req('GET', '/presencas/' + servidorId);
-        if (data.success) DataStore.cachePresenca(servidorId, data.data);
+        if (data && data.success) DataStore.cachePresenca(servidorId, data.data);
         return data;
     };
     MockAPI.syncPresenca = async function (servidorId, presencaMap) {
-        return await req('PUT', '/presencas/' + servidorId, presencaMap);
+        return await reqSilent('PUT', '/presencas/' + servidorId, presencaMap);
     };
     MockAPI.setPresencaDia = async function (servidorId, data, status) {
         var result = await req('PUT', '/presencas/' + servidorId + '/dia', { data: data, status: status });
-        // Atualizar cache local imediatamente
-        if (result.success) {
-            var mapa  = DataStore.get('presenca_' + servidorId) || {};
-            var partes = data.split('-'); // YYYY-MM-DD
-            var mes   = partes[0] + '-' + partes[1];
-            var dia   = partes[2];
+        if (result && result.success) {
+            var mapa = DataStore.get('presenca_' + servidorId) || {};
+            var partes = data.split('-');
+            var mes = partes[0] + '-' + partes[1];
+            var dia = partes[2];
             if (!mapa[mes]) mapa[mes] = {};
             mapa[mes][dia] = status;
             DataStore.cachePresenca(servidorId, mapa);
@@ -206,34 +213,26 @@
         return result;
     };
 
-    // ── Interceptar salvamento de presença no DataStore ───────────────────
-    // Quando controle-presenca.js salvar presença no localStorage,
-    // sincroniza automaticamente com o banco
+    // ── Interceptar presença no DataStore ─────────────────────────────────
     var _setOriginal = DataStore.set.bind(DataStore);
     DataStore.set = function (key, value) {
         var result = _setOriginal(key, value);
         if (key && key.startsWith('presenca_') && typeof value === 'object') {
             var sid = parseInt(key.replace('presenca_', ''));
-            if (sid) {
-                MockAPI.syncPresenca(sid, value).catch(function (e) {
-                    console.warn('Falha ao sincronizar presença:', e);
-                });
-            }
+            if (sid) reqSilent('PUT', '/presencas/' + sid, value);
         }
         return result;
     };
 
-    // ── Login async no AuthManager ────────────────────────────────────────
+    // ── Substituir login no AuthManager ───────────────────────────────────
     if (typeof AuthManager !== 'undefined') {
         AuthManager.prototype.login = function (ponto, senha) {
             var self = this;
-            return login(ponto, senha).then(function (data) {
+            return fazerLogin(ponto, senha).then(function (data) {
                 if (!data.success) {
                     return { success: false, message: data.message || 'Credenciais inválidas.' };
                 }
-                // Sessão já foi salva pela função login() acima
-                // Retorna no mesmo formato do mock para o auth.js
-                return { success: true, servidor: data.usuario, session: self.getSession() };
+                return { success: true, servidor: data.usuario, session: data.session };
             }).catch(function (err) {
                 console.error('Erro no login:', err);
                 return { success: false, message: 'Erro de conexão com o servidor.' };
@@ -241,9 +240,8 @@
         };
     }
 
-    // ── Ativar modo backend e popular cache ───────────────────────────────
+    // ── Ativar e inicializar ──────────────────────────────────────────────
     if (typeof DataStore !== 'undefined') DataStore.ativarModoBackend();
-    // Inicializar cache assim que a página carregar
     document.addEventListener('DOMContentLoaded', function () {
         inicializarCache();
     });
