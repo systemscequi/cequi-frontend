@@ -15,6 +15,7 @@
     function makeHeaders() {
         var h = { 'Content-Type': 'application/json' };
         var t = getToken();
+        console.log('🔑 Token ao fazer requisição:', t ? t.substring(0, 20) + '...' : 'AUSENTE');
         if (t) h['Authorization'] = 'Bearer ' + t;
         return h;
     }
