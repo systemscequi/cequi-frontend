@@ -314,15 +314,16 @@ window.Auth = new AuthManager();
 var _currentPage = window.location.pathname.split("/").pop().split("?")[0];
 if (_currentPage === "login.html") {
 
-    // Limpar sessão anterior ao carregar o login
-    sessionStorage.removeItem('cequi_session');
-    sessionStorage.removeItem('cequi_token');
-
     document.addEventListener("DOMContentLoaded", function() {
+        // Se já está autenticado com sessão válida, redirecionar para dashboard
         if (Auth.isAuthenticated()) {
             window.location.href = "index.html";
             return;
         }
+
+        // Limpar sessão inválida/expirada
+        sessionStorage.removeItem('cequi_session');
+        sessionStorage.removeItem('cequi_token');
 
         var form = document.getElementById("loginForm");
         if (!form) return;
