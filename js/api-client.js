@@ -39,6 +39,19 @@
         return data;
     }
 
+    // Versão silenciosa — não redireciona em caso de 401 (usada no cache init)
+    async function reqSilent(method, path, body) {
+        try {
+            var opts = { method: method, headers: headers() };
+            if (body !== undefined) opts.body = JSON.stringify(body);
+            var res  = await fetch(BASE_URL + path, opts);
+            if (!res.ok) return { success: false };
+            return await res.json();
+        } catch (e) {
+            return { success: false };
+        }
+    }
+
     // ── Login ─────────────────────────────────────────────────────────────
     async function login(ponto, senha) {
         var data = await req('POST', '/colaboradores/login', { ponto: parseInt(ponto), senha: senha });
@@ -59,30 +72,30 @@
     }
 
     // ── Inicialização: popular cache com dados do banco ───────────────────
-    // Roda assim que o api-client carrega, após o login ser detectado
     async function inicializarCache() {
         var token = getToken();
-        if (!token) return; // não logado ainda, nada a fazer
+        if (!token) return;
 
         try {
-            // Colaboradores → cache
-            var cols = await req('GET', '/colaboradores/todos');
+            var session = JSON.parse(sessionStorage.getItem('cequi_session') || '{}');
+            var isAdmin = session.role === 'admin';
+
+            // Usa reqSilent para não redirecionar em caso de 401
+            var colsUrl = isAdmin ? '/colaboradores/todos' : '/colaboradores';
+            var cols = await reqSilent('GET', colsUrl);
             if (cols.success) DataStore.cacheColaboradores(cols.data);
 
-            // Feriados → cache
-            var fers = await req('GET', '/feriados');
+            var fers = await reqSilent('GET', '/feriados');
             if (fers.success) DataStore.cacheFeriados(fers.data);
 
-            // Presença do servidor atual → cache
-            var session = JSON.parse(sessionStorage.getItem('cequi_session') || '{}');
             if (session.userId) {
-                var pres = await req('GET', '/presencas/' + session.userId);
+                var pres = await reqSilent('GET', '/presencas/' + session.userId);
                 if (pres.success) DataStore.cachePresenca(session.userId, pres.data);
             }
 
             console.log('✅ Cache sincronizado com o banco');
         } catch (e) {
-            console.warn('⚠️ Falha ao sincronizar cache com banco:', e.message);
+            console.warn('⚠️ Falha ao sincronizar cache:', e.message);
         }
     }
 
