@@ -55,18 +55,21 @@
     // ── Login ─────────────────────────────────────────────────────────────
     async function login(ponto, senha) {
         var data = await req('POST', '/colaboradores/login', { ponto: parseInt(ponto), senha: senha });
-        if (data.success && data.token) {
-            sessionStorage.setItem('cequi_token', data.token);
+        if (data.success && data.token && data.usuario) {
+            var u = data.usuario;
             var session = {
-                userId:    data.usuario.id,
-                ponto:     data.usuario.ponto,
-                nome:      data.usuario.nome,
-                area:      data.usuario.area,
-                role:      data.usuario.role,
+                userId:    u.id,
+                ponto:     u.ponto,
+                nome:      u.nome,
+                area:      u.area,
+                role:      u.role,
                 loginTime: new Date().toISOString(),
                 expiresAt: new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString()
             };
+            // Usar o mesmo mecanismo do AuthManager original
             sessionStorage.setItem('cequi_session', JSON.stringify(session));
+            sessionStorage.setItem('cequi_token',   data.token);
+            if (typeof CurrentServer !== 'undefined') CurrentServer.set(u);
         }
         return data;
     }
@@ -223,15 +226,16 @@
     // ── Login async no AuthManager ────────────────────────────────────────
     if (typeof AuthManager !== 'undefined') {
         AuthManager.prototype.login = function (ponto, senha) {
+            var self = this;
             return login(ponto, senha).then(function (data) {
                 if (!data.success) {
                     return { success: false, message: data.message || 'Credenciais inválidas.' };
                 }
-                var u       = data.usuario;
-                var session = JSON.parse(sessionStorage.getItem('cequi_session') || '{}');
-                if (typeof CurrentServer !== 'undefined') CurrentServer.set(u);
-                return { success: true, servidor: u, session: session };
-            }).catch(function () {
+                // Sessão já foi salva pela função login() acima
+                // Retorna no mesmo formato do mock para o auth.js
+                return { success: true, servidor: data.usuario, session: self.getSession() };
+            }).catch(function (err) {
+                console.error('Erro no login:', err);
                 return { success: false, message: 'Erro de conexão com o servidor.' };
             });
         };
