@@ -36,6 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 function popularSelectAno() {
     const select = document.getElementById('selectAno');
+    if (!select) return;
     const anoAtual = new Date().getFullYear();
     select.innerHTML = '';
     for (let ano = anoAtual - 5; ano <= anoAtual + 2; ano++) {
