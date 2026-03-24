@@ -389,6 +389,10 @@ if (_currentPage === "login.html") {
 // ─── DEMAIS PÁGINAS ─────────────────────────────────────────────────────
 } else {
     document.addEventListener("DOMContentLoaded", function() {
+        var session = Auth.getSession();
+        console.log('🔍 requireAuth check — página:', window.location.pathname);
+        console.log('🔍 session:', session ? JSON.stringify(session) : 'null');
+        console.log('🔍 token:', sessionStorage.getItem('cequi_token') ? 'presente' : 'ausente');
         if (!Auth.requireAuth()) return;
         Auth.applyRoleUI();
     });
