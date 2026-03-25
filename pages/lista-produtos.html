@@ -91,12 +91,12 @@
             <div class="table-wrapper"><table>
                 <thead>
                     <tr>
-                        <th>Código</th>
+                        <th style="cursor:pointer;user-select:none;" onclick="sortListaProdutos('codigo')" id="th-codigo">Código <span id="sort-codigo"></span></th>
                         <th>Produto</th>
                         <th>Período</th>
-                        <th style="white-space:nowrap;">Duração</th>
+                        <th style="white-space:nowrap;cursor:pointer;user-select:none;" onclick="sortListaProdutos('duracao')" id="th-duracao">Duração <span id="sort-duracao"></span></th>
                         <th>Atividades</th>
-                        <th>Pontos</th>
+                        <th style="cursor:pointer;user-select:none;" onclick="sortListaProdutos('pontos')" id="th-pontos">Pontos <span id="sort-pontos"></span></th>
                         <th>Status</th>
                         <th>Ações</th>
                     </tr>

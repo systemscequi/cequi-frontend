@@ -13,8 +13,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ─── Carregar ────────────────────────────────────────────────────────
 async function loadColaboradores() {
     try {
-        const result = await MockAPI.getColaboradores();
-        if (result.success) {
+        // Usar MockAPI.getTodosColaboradores se disponível (backend ativo)
+        // senão usar getColaboradores normal
+        const fn = typeof MockAPI.getTodosColaboradores === 'function'
+            ? MockAPI.getTodosColaboradores
+            : MockAPI.getColaboradores;
+        const result = await fn.call(MockAPI);
+        if (result && result.success) {
             colaboradores = result.data;
             renderizarTabela();
         }
@@ -40,7 +45,10 @@ function renderizarTabela(dados = colaboradores) {
         const roleBadge = isAdmin
             ? `<span class="badge-admin">🔑 Admin</span>`
             : `<span class="badge-user">👤 Usuário</span>`;
-        const senhaTexto = col.senha ? '•'.repeat(Math.min(col.senha.length, 10)) : '—';
+        // Senha é hash bcrypt no banco — mostrar indicador seguro
+        const senhaTexto = col.senha && col.senha.startsWith('$2')
+            ? '<span style="color:var(--success);font-size:0.75rem;">✓ Definida</span>'
+            : (col.senha ? '••••••••' : '—');
 
         return `
         <tr onclick="abrirModalEdicao(${col.id})">
@@ -127,14 +135,18 @@ function abrirModalEdicao(id) {
 
             <!-- Senha -->
             <div style="margin-bottom:1.75rem;">
-                <label class="form-label">Senha de Acesso <span class="required">*</span></label>
+                <label class="form-label">Nova Senha de Acesso</label>
                 <div class="senha-wrapper">
                     <input type="password" id="editSenha" class="form-input"
-                           value="${col.senha || 'cequi2026'}" autocomplete="new-password">
+                           placeholder="Deixe em branco para manter a atual"
+                           autocomplete="new-password">
                     <button type="button" class="btn-eye" id="btnOlho" onclick="toggleOlho()" title="Mostrar senha">👁️</button>
                 </div>
                 <div class="senha-hint" id="senhaHint">
-                    🔒 Senha atual: <code id="senhaAtualTexto">${col.senha || 'cequi2026'}</code>
+                    🔒 Deixe em branco para <strong>manter a senha atual</strong>. Preencha para redefinir.
+                </div>
+                <div id="senhaNovaConfirm" style="display:none;margin-top:0.5rem;padding:0.5rem 0.75rem;background:rgba(16,185,129,0.1);border:1px solid var(--success);border-radius:6px;font-size:0.82rem;color:var(--success);">
+                    ✅ Nova senha: <code id="senhaNovaTexto" style="font-family:var(--code-font);"></code>
                 </div>
             </div>
 
@@ -149,9 +161,16 @@ function abrirModalEdicao(id) {
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-    // Atualizar hint de senha ao digitar
+    // Mostrar confirmação ao digitar nova senha
     document.getElementById('editSenha').addEventListener('input', function() {
-        document.getElementById('senhaAtualTexto').textContent = this.value || '—';
+        const confirm = document.getElementById('senhaNovaConfirm');
+        const texto   = document.getElementById('senhaNovaTexto');
+        if (this.value.length >= 4) {
+            confirm.style.display = 'block';
+            texto.textContent = this.value;
+        } else {
+            confirm.style.display = 'none';
+        }
     });
 }
 
@@ -188,36 +207,35 @@ function salvarEdicao(id) {
     const role  = document.getElementById('editRole')?.value || 'user';
     const senha = document.getElementById('editSenha')?.value.trim();
 
-    if (!nome)                { Notify.error('Informe o nome!'); return; }
-    if (!ponto || ponto < 1)  { Notify.error('Informe o ponto!'); return; }
-    if (!area)                { Notify.error('Selecione a área!'); return; }
-    if (!senha || senha.length < 4) { Notify.error('Senha deve ter ao menos 4 caracteres!'); return; }
+    if (!nome)               { Notify.error('Informe o nome!'); return; }
+    if (!ponto || ponto < 1) { Notify.error('Informe o ponto!'); return; }
+    if (!area)               { Notify.error('Selecione a área!'); return; }
+    if (senha && senha.length < 4) { Notify.error('Senha deve ter ao menos 4 caracteres!'); return; }
 
     const dup = colaboradores.find(c => c.ponto === ponto && c.id !== id);
     if (dup) { Notify.error(`Ponto ${ponto} já está em uso por ${dup.nome}!`); return; }
 
+    // Só inclui senha no payload se foi preenchida
+    const payload = { nome, ponto, area, role };
+    if (senha) payload.senha = senha;
+
     const idx = colaboradores.findIndex(c => c.id === id);
     if (idx !== -1) {
-        const payload = { nome, ponto, area, role, senha };
         MockAPI.updateColaborador(id, payload)
             .then(function(result) {
                 if (result.success) {
-                    colaboradores[idx] = { ...colaboradores[idx], ...payload };
-                    DataStore.saveColaboradores(colaboradores);
+                    // Recarregar lista para mostrar dados atualizados do banco
+                    loadColaboradores();
+                    Notify.success('Colaborador atualizado!');
+                } else {
+                    Notify.error(result.message || 'Erro ao atualizar.');
                 }
             }).catch(function() {
-                // Fallback localStorage
-                colaboradores[idx] = { ...colaboradores[idx], nome, ponto, area, role, senha };
-                DataStore.saveColaboradores(colaboradores);
+                Notify.error('Erro de conexão ao salvar.');
             });
-        // Atualizar UI imediatamente (otimista)
-        colaboradores[idx] = { ...colaboradores[idx], nome, ponto, area, role, senha };
-        DataStore.saveColaboradores(colaboradores);
     }
 
     document.getElementById('modalColaborador')?.remove();
-    renderizarTabela();
-    Notify.success('Colaborador atualizado!');
 }
 
 // ─── Novo colaborador ─────────────────────────────────────────────────
@@ -238,22 +256,15 @@ function setupEventListeners() {
         MockAPI.createColaborador({ nome, ponto, area, role, senha })
             .then(function(result) {
                 if (result.success) {
-                    colaboradores.push(result.data || { nome, ponto, area, role, senha });
-                    DataStore.saveColaboradores(colaboradores);
-                    renderizarTabela();
                     document.getElementById('colaboradorForm').reset();
                     Notify.success('Colaborador cadastrado com sucesso!');
+                    // Recarregar lista completa do banco
+                    loadColaboradores();
                 } else {
                     Notify.error(result.message || 'Erro ao cadastrar colaborador.');
                 }
             }).catch(function() {
-                // Fallback: salvar só no localStorage
-                const novoId = colaboradores.length > 0 ? Math.max(...colaboradores.map(c => c.id)) + 1 : 1;
-                colaboradores.push({ id: novoId, nome, ponto, area, role, senha });
-                DataStore.saveColaboradores(colaboradores);
-                renderizarTabela();
-                document.getElementById('colaboradorForm').reset();
-                Notify.success('Colaborador cadastrado com sucesso!');
+                Notify.error('Erro de conexão ao salvar colaborador.');
             });
     });
 

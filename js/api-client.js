@@ -112,6 +112,12 @@
         if (data && data.success) DataStore.cacheColaboradores(data.data);
         return data;
     };
+    // Para a tela de gestão de colaboradores (admin vê todos)
+    MockAPI.getTodosColaboradores = async function () {
+        var data = await req('GET', '/colaboradores/todos');
+        if (data && data.success) DataStore.cacheColaboradores(data.data);
+        return data;
+    };
     MockAPI.getColaborador = async function (id) {
         return await req('GET', '/colaboradores/' + id);
     };

@@ -4,7 +4,26 @@
 
 let produtos = [];
 let filtroStatus = 'todos';
-let filtroMesAno = null; // null = todos os meses
+let filtroMesAno = null;
+let sortColuna = null;    // 'codigo' | 'duracao' | 'pontos'
+let sortAsc    = true;
+
+function sortListaProdutos(coluna) {
+    if (sortColuna === coluna) {
+        sortAsc = !sortAsc;
+    } else {
+        sortColuna = coluna;
+        sortAsc = true;
+    }
+    // Atualizar indicadores visuais
+    ['codigo','duracao','pontos'].forEach(c => {
+        const el = document.getElementById('sort-' + c);
+        if (el) el.textContent = '';
+    });
+    const el = document.getElementById('sort-' + coluna);
+    if (el) el.textContent = sortAsc ? ' ▲' : ' ▼';
+    renderizarTabela();
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     initListaMesAno();
@@ -168,8 +187,34 @@ function renderizarTabela(termo = '') {
         return;
     }
 
-    // Ordenar por data (mais recente primeiro)
-    produtosFiltrados.sort((a, b) => new Date(b.dataInicio) - new Date(a.dataInicio));
+    // Ordenar
+    if (sortColuna) {
+        produtosFiltrados.sort((a, b) => {
+            let va, vb;
+            if (sortColuna === 'codigo') {
+                va = a.codigo || '';
+                vb = b.codigo || '';
+                return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+            }
+            if (sortColuna === 'duracao') {
+                const getDias = p => {
+                    if (!p.dataInicio || !p.dataFim) return -1;
+                    return Math.round((new Date(p.dataFim) - new Date(p.dataInicio)) / 86400000) + 1;
+                };
+                va = getDias(a); vb = getDias(b);
+                return sortAsc ? va - vb : vb - va;
+            }
+            if (sortColuna === 'pontos') {
+                va = a.atividades?.reduce((s,x) => s + (x.pontos||0), 0) || 0;
+                vb = b.atividades?.reduce((s,x) => s + (x.pontos||0), 0) || 0;
+                return sortAsc ? va - vb : vb - va;
+            }
+            return 0;
+        });
+    } else {
+        // Ordenar por data (mais recente primeiro) — padrão
+        produtosFiltrados.sort((a, b) => new Date(b.dataInicio) - new Date(a.dataInicio));
+    }
 
     tbody.innerHTML = produtosFiltrados.map(prod => {
         const numAtividades = prod.atividades?.length || 0;
