@@ -1,192 +1,298 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <link rel="icon" type="image/x-icon" href="../assets/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CEQUI - Visão da Equipe</title>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Work+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../css/styles.css">
-    <link rel="stylesheet" href="../css/dashboard.css">
-    <link rel="stylesheet" href="../css/equipe.css">
-    <link rel="stylesheet" href="../css/theme.css">
-    <link rel="stylesheet" href="../css/theme-light.css">
-</head>
-<body>
-    <header>
-        <div class="header-content">
-            <a href="../index.html" class="logo">
-                <div class="logo-icon"><img class="logo-img" src="../assets/logo_escura.png" alt="CEQUI"></div>
-                <div class="logo-text">
-                    <h1>CEQUI</h1>
-                    <p>Controle de Produtividade</p>
-                </div>
-            </a>
-            <nav class="header-nav">
-                <a href="../index.html" class="nav-btn">Dashboard</a>
-                <a href="cadastro-produtos.html" class="nav-btn">Novo Produto</a>
-                <a href="lista-produtos.html" class="nav-btn">Lista de Produtos</a>
-                <a href="nova-atividade.html" class="nav-btn">Nova Atividade</a>
-                <a href="visao-equipe.html" class="nav-btn active">Equipe</a>
-                <a href="relatorios.html" class="nav-btn">Relatórios</a>
-                <a href="configuracoes.html" class="nav-btn">Configurações</a>
-                <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
-            </nav>
-            <div class="header-right" id="headerRight"></div>
-            <button class="hamburger" onclick="toggleMobileNav()" aria-label="Menu">
-                <span></span><span></span><span></span>
-            </button>
-        </div>
-    </header>
-    <nav class="mobile-nav" id="mobileNav">
-    </nav>
+/**
+ * CEQUI - Visão da Equipe
+ * Comparativo de produtividade filtrado por mês/ano
+ * Média = Σ pontos finalizados no mês / nº de servidores operacionais
+ */
 
-    <div class="container">
-        <div class="page-header">
-            <h1 class="page-title">Visão da Equipe</h1>
-            <p class="page-subtitle">Comparativo de produtividade de todos os servidores</p>
-        </div>
+let colaboradores = [];
+let produtos       = [];
+let equipeMesAno   = null; // "YYYY-MM"
 
-        <!-- Seletor de período -->
-        <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:1.5rem;padding:0.75rem 1rem;background:var(--bg-card);border:1px solid var(--border);border-radius:10px;flex-wrap:wrap;">
-            <span style="font-size:0.78rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Período:</span>
-            <select id="equipeMesSelect" onchange="onPeriodoEquipeChange()" style="padding:0.4rem 0.8rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);font-family:var(--code-font);font-size:0.88rem;font-weight:700;border-radius:6px;cursor:pointer;">
-                <option value="0">Janeiro</option><option value="1">Fevereiro</option>
-                <option value="2">Março</option><option value="3">Abril</option>
-                <option value="4">Maio</option><option value="5">Junho</option>
-                <option value="6">Julho</option><option value="7">Agosto</option>
-                <option value="8">Setembro</option><option value="9">Outubro</option>
-                <option value="10">Novembro</option><option value="11">Dezembro</option>
-            </select>
-            <select id="equipeAnoSelect" onchange="onPeriodoEquipeChange()" style="padding:0.4rem 0.8rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);font-family:var(--code-font);font-size:0.88rem;font-weight:700;border-radius:6px;cursor:pointer;"></select>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-label">Total de Servidores</div>
-                </div>
-                <div class="stat-value" id="totalServidores">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-label">Produtos do Mês</div>
-                </div>
-                <div style="display:flex;flex-direction:column;gap:0.5rem;margin-top:0.25rem;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="font-size:0.78rem;color:var(--warning);">Em Andamento</span>
-                        <span class="stat-value" id="produtosAndamento" style="font-size:1.4rem;">-</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="font-size:0.78rem;color:var(--success);">Finalizados</span>
-                        <span class="stat-value" id="produtosFinalizados" style="font-size:1.4rem;color:var(--success);">-</span>
-                    </div>
-                    <div style="display:flex;justify-content:space-between;align-items:center;">
-                        <span style="font-size:0.78rem;color:#818cf8;">Não Concluídos</span>
-                        <span class="stat-value" id="produtosNaoConcluidos" style="font-size:1.4rem;color:#818cf8;">-</span>
-                    </div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-label">Meta de Referência da Coordenação (MRC)</div>
-                </div>
-                <div class="stat-value" id="duracaoMediaDiaria" style="color:var(--accent);">-</div>
-                <div id="subDuracaoMedia" style="font-size:0.72rem;color:var(--text-muted);margin-top:0.25rem;"></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-label">Dur. Média dos Produtos</div>
-                </div>
-                <div class="stat-value" id="duracaoMediaDias" style="color:var(--secondary-light);">-</div>
-                <div id="subDuracaoDias" style="font-size:0.72rem;color:var(--text-muted);margin-top:0.25rem;"></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-label">Média Mecânica</div>
-                </div>
-                <div class="stat-value" id="mediaMediaMecanica">-</div>
-                <div id="subMediaMecanica" style="font-size:0.72rem;color:var(--text-muted);margin-top:0.25rem;"></div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-header">
-                    <div class="stat-label">Média Eletrônica</div>
-                </div>
-                <div class="stat-value" id="mediaMediaEletronica">-</div>
-                <div id="subMediaEletronica" style="font-size:0.72rem;color:var(--text-muted);margin-top:0.25rem;"></div>
-            </div>
-        </div>
-
-        <div class="card">
-            <div class="table-header">
-                <h2 class="table-title">Produtividade por Servidor</h2>
-                <input type="text" class="search-box" id="searchBox" placeholder="Buscar servidor...">
-            </div>
-            <div class="table-wrapper"><table>
-                <thead>
-                    <tr>
-                        <th>Ponto</th>
-                        <th>Nome</th>
-                        <th>Área</th>
-                        <th>Total Produtos</th>
-                        <th>Em Andamento</th>
-                        <th>Finalizados</th>
-                        <th>Não Concluídos</th>
-                        <th>Pontos</th>
-                        <th>Média Diária</th>
-                        <th>Desempenho Relativo</th>
-                    </tr>
-                </thead>
-                <tbody id="equipeTable">
-                    <tr>
-                        <td colspan="7" class="empty-state">
-                            <div class="empty-state-icon">👥</div>
-                            <p>Carregando dados...</p>
-                        </td>
-                    </tr>
-                </tbody>
-            </table></div>
-        </div>
-    </div>
-
-        <button id="themeToggle" class="theme-toggle" aria-label="Alternar tema"></button>
-
-<script src="../js/mock-data.js"></script>
-    <script src="../js/app.js"></script>
-    <script src="../js/notifications.js"></script>
-    <script src="../js/storage.js"></script>
-    <script src="../js/api-client.js?v=2"></script>
-    <script src="../js/export.js"></script>
-    <script src="../js/controle-presenca.js"></script>
-    <script src="../js/auth.js?v=2"></script>
-    <script src="../js/equipe.js"></script>
-    <script src="../js/theme.js"></script>
-
-<script>
-function toggleMobileNav() {
-    const nav = document.getElementById('mobileNav');
-    nav.classList.toggle('open');
-}
-// Clonar links do header-nav para o mobile-nav
-document.addEventListener('DOMContentLoaded', function() {
-    // Clonar nav após o auth filtrar os itens (pequeno delay)
-    setTimeout(function() {
-        const headerNav = document.querySelector('.header-nav');
-        const headerRight = document.querySelector('.header-right');
-        const mobileNav = document.getElementById('mobileNav');
-        if (headerNav && mobileNav) {
-            mobileNav.innerHTML = headerNav.innerHTML;
-            if (headerRight && headerRight.innerHTML.trim()) {
-                const sep = document.createElement('div');
-                sep.style.cssText = 'border-top:1px solid var(--border);margin:0.3rem 0;';
-                mobileNav.appendChild(sep);
-                const rightClone = headerRight.cloneNode(true);
-                rightClone.style.cssText = 'display:flex;flex-wrap:wrap;gap:0.5rem;padding:0.25rem 0;justify-content:flex-start;';
-                mobileNav.appendChild(rightClone);
-            }
-        }
-    }, 300);
+document.addEventListener('DOMContentLoaded', async () => {
+    if (typeof Auth !== 'undefined' && !Auth.isAdmin()) {
+        window.location.href = '../index.html';
+        return;
+    }
+    initEquipeMesAno();
+    await loadEquipeData();
+    setupEventListeners();
 });
-</script>
-</body>
-</html>
+
+// ─── Inicializa seletores com o mês atual ────────────────────────────
+function initEquipeMesAno() {
+    const selMes = document.getElementById('equipeMesSelect');
+    const selAno = document.getElementById('equipeAnoSelect');
+    if (!selMes || !selAno) return;
+
+    const hoje     = new Date();
+    const mesAtual = hoje.getMonth(); // 0-11
+    const anoAtual = hoje.getFullYear();
+
+    selMes.value = mesAtual;
+
+    const anos = [anoAtual, anoAtual - 1, anoAtual - 2];
+    selAno.innerHTML = anos.map(a =>
+        `<option value="${a}"${a === anoAtual ? ' selected' : ''}>${a}</option>`
+    ).join('');
+
+    equipeMesAno = `${anoAtual}-${String(mesAtual + 1).padStart(2, '0')}`;
+}
+
+function getEquipeMesAno() {
+    const mes = document.getElementById('equipeMesSelect')?.value;
+    const ano = document.getElementById('equipeAnoSelect')?.value;
+    if (mes !== undefined && ano) return `${ano}-${String(parseInt(mes) + 1).padStart(2, '0')}`;
+    return equipeMesAno;
+}
+
+function onPeriodoEquipeChange() {
+    equipeMesAno = getEquipeMesAno();
+    calcularEstatisticas();
+    renderTable(document.getElementById('searchBox')?.value || '');
+}
+
+// ─── Filtra produtos pelo mês de início ──────────────────────────────
+function filtrarProdutosMes(lista, mesAno) {
+    if (!mesAno) return lista;
+    return lista.filter(p => {
+        if (!p.dataInicio) return false;
+        return p.dataInicio.substring(0, 7) === mesAno;
+    });
+}
+
+// ─── Carrega dados ────────────────────────────────────────────────────
+async function loadEquipeData() {
+    try {
+        const colabResult = await MockAPI.getColaboradores();
+        if (colabResult.success) {
+            colaboradores = colabResult.data.filter(c => c.area !== 'CEQUI');
+        }
+        const prodResult = await MockAPI.getProdutos();
+        if (prodResult.success) {
+            produtos = prodResult.data;
+        }
+        calcularEstatisticas();
+        renderTable();
+    } catch (err) {
+        console.error('Erro ao carregar dados:', err);
+        Notify.error('Erro ao carregar dados da equipe');
+    }
+}
+
+// ─── KPIs do topo ─────────────────────────────────────────────────────
+function calcularEstatisticas() {
+    const mesAno = getEquipeMesAno();
+    const produtosMes = filtrarProdutosMes(produtos, mesAno);
+
+    // Excluir area CEQUI também dos produtos
+    const produtosOper = produtosMes.filter(p => {
+        const col = colaboradores.find(c => c.id === p.servidorId);
+        return col !== undefined; // só servidores operacionais
+    });
+
+    const qtdAndamento    = produtosOper.filter(p => resolverStatus(p) === 'em-andamento').length;
+    const qtdFinalizado   = produtosOper.filter(p => resolverStatus(p) === 'finalizado').length;
+    const qtdNaoConcluido = produtosOper.filter(p => resolverStatus(p) === 'nao-concluido').length;
+
+    document.getElementById('totalServidores').textContent     = colaboradores.length;
+    document.getElementById('produtosAndamento').textContent   = qtdAndamento;
+    document.getElementById('produtosFinalizados').textContent = qtdFinalizado;
+    const elNC = document.getElementById('produtosNaoConcluidos');
+    if (elNC) elNC.textContent = qtdNaoConcluido;
+
+    const subAndamento = document.getElementById('subAndamento');
+    if (subAndamento) subAndamento.textContent = '';
+
+    // Média = Σ pontos finalizados no mês / nº de servidores operacionais
+    let totalPontosFinalizados = 0;
+    produtosOper
+        .filter(p => resolverStatus(p) === 'finalizado')
+        .forEach(p => {
+            (p.atividades || []).forEach(a => { totalPontosFinalizados += a.pontos || 0; });
+        });
+
+    const media = colaboradores.length > 0
+        ? (totalPontosFinalizados / colaboradores.length).toFixed(2)
+        : '0.00';
+
+    document.getElementById('mediaProdutividade').textContent = media;
+
+    const subMedia = document.getElementById('subMedia');
+    if (subMedia) subMedia.textContent = `${totalPontosFinalizados} pts ÷ ${colaboradores.length} servidores`;
+
+    // ── Duração Média Diária da Equipe ────────────────────────────────
+    // Σ médias diárias individuais ÷ quantidade de servidores
+    let somaMediasDiarias = 0;
+    let servidoresComDados = 0;
+    colaboradores.forEach(col => {
+        const prodsMes = filtrarProdutosMes(produtos.filter(p => p.servidorId === col.id), mesAno);
+        let ptsFin = 0;
+        prodsMes.filter(p => resolverStatus(p) === 'finalizado').forEach(p => {
+            (p.atividades || []).forEach(a => { ptsFin += a.pontos || 0; });
+        });
+        const diasTrab = window.PresencaManager
+            ? window.PresencaManager.getDiasTrabalhados(col.id, mesAno)
+            : 0;
+        if (diasTrab > 0) {
+            somaMediasDiarias += ptsFin / diasTrab;
+            servidoresComDados++;
+        }
+    });
+
+    const duracaoMediaDiaria = servidoresComDados > 0
+        ? (somaMediasDiarias / servidoresComDados).toFixed(2)
+        : '—';
+
+    const elDuracao = document.getElementById('duracaoMediaDiaria');
+    const elSubDuracao = document.getElementById('subDuracaoMedia');
+    if (elDuracao) elDuracao.textContent = duracaoMediaDiaria !== '—' ? duracaoMediaDiaria + ' pts/dia' : '—';
+    if (elSubDuracao) elSubDuracao.textContent = servidoresComDados > 0
+        ? `Σ médias ÷ ${servidoresComDados} servidor${servidoresComDados !== 1 ? 'es' : ''} com registro`
+        : 'Sem registros de presença';
+
+    // ── Duração Média em Dias dos Produtos Finalizados ────────────────
+    // Σ dias corridos de todos os produtos finalizados ÷ total de produtos finalizados
+    let somaDiasFinalizados = 0;
+    let totalProdutosFinalizados = 0;
+    produtosOper.filter(p => resolverStatus(p) === 'finalizado' && p.dataInicio && p.dataFim).forEach(p => {
+        const dIni = new Date(p.dataInicio + 'T00:00:00');
+        const dFim = new Date(p.dataFim    + 'T00:00:00');
+        somaDiasFinalizados += Math.max(1, Math.round((dFim - dIni) / 86400000) + 1);
+        totalProdutosFinalizados++;
+    });
+
+    const duracaoMediaDias = totalProdutosFinalizados > 0
+        ? (somaDiasFinalizados / totalProdutosFinalizados).toFixed(1)
+        : '—';
+
+    const elDuracaoDias    = document.getElementById('duracaoMediaDias');
+    const elSubDuracaoDias = document.getElementById('subDuracaoDias');
+    if (elDuracaoDias) elDuracaoDias.textContent = duracaoMediaDias !== '—' ? duracaoMediaDias + ' dias' : '—';
+    if (elSubDuracaoDias) elSubDuracaoDias.textContent = totalProdutosFinalizados > 0
+        ? `${somaDiasFinalizados} dias ÷ ${totalProdutosFinalizados} produto${totalProdutosFinalizados !== 1 ? 's' : ''} finalizado${totalProdutosFinalizados !== 1 ? 's' : ''}`
+        : 'Sem produtos finalizados';
+
+    // ── Média por área ────────────────────────────────────────────────
+    ['Mecânica', 'Eletrônica'].forEach(area => {
+        const colabsArea  = colaboradores.filter(c => c.area === area);
+        const produtosArea = produtosOper.filter(p => {
+            const col = colabsArea.find(c => c.id === p.servidorId);
+            return col !== undefined && resolverStatus(p) === 'finalizado';
+        });
+        let ptsArea = 0;
+        produtosArea.forEach(p => (p.atividades || []).forEach(a => { ptsArea += a.pontos || 0; }));
+        const mediaArea = colabsArea.length > 0 ? (ptsArea / colabsArea.length).toFixed(2) : '0.00';
+        const key = area === 'Mecânica' ? 'Mecanica' : 'Eletronica';
+        const elVal = document.getElementById('mediaMedia' + key);
+        const elSub = document.getElementById('subMedia' + key);
+        if (elVal) elVal.textContent = mediaArea;
+        if (elSub) elSub.textContent = ptsArea + ' pts ÷ ' + colabsArea.length + ' servidores';
+    });
+}
+
+// ─── Tabela por servidor ──────────────────────────────────────────────
+function renderTable(filtro = '') {
+    const tbody  = document.getElementById('equipeTable');
+    const mesAno = getEquipeMesAno();
+
+    const dadosEquipe = colaboradores.map(col => {
+        const prodsMes   = filtrarProdutosMes(produtos.filter(p => p.servidorId === col.id), mesAno);
+
+        const qtdTotal        = prodsMes.length;
+        const qtdAndamento    = prodsMes.filter(p => resolverStatus(p) === 'em-andamento').length;
+        const qtdFinalizados  = prodsMes.filter(p => resolverStatus(p) === 'finalizado').length;
+        const qtdNaoConcluido = prodsMes.filter(p => resolverStatus(p) === 'nao-concluido').length;
+
+        // Pontos só dos finalizados no mês
+        let pontosFinalizados = 0;
+        prodsMes.filter(p => resolverStatus(p) === 'finalizado').forEach(p => {
+            (p.atividades || []).forEach(a => { pontosFinalizados += a.pontos || 0; });
+        });
+
+        const diasTrabalhados = window.PresencaManager
+            ? window.PresencaManager.getDiasTrabalhados(col.id, mesAno)
+            : 0;
+
+        const mediaDiaria = diasTrabalhados > 0
+            ? (pontosFinalizados / diasTrabalhados).toFixed(2)
+            : '0.00';
+
+        return {
+            ...col,
+            qtdTotal, qtdAndamento, qtdFinalizados, qtdNaoConcluido,
+            pontosFinalizados, diasTrabalhados,
+            mediaDiaria: parseFloat(mediaDiaria)
+        };
+    });
+
+    // Ordenar por pontos finalizados (maior primeiro)
+    dadosEquipe.sort((a, b) => b.pontosFinalizados - a.pontosFinalizados);
+
+    let filtrados = dadosEquipe;
+    if (filtro) {
+        const t = filtro.toLowerCase();
+        filtrados = dadosEquipe.filter(d =>
+            d.nome.toLowerCase().includes(t) || d.area.toLowerCase().includes(t)
+        );
+    }
+
+    if (filtrados.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">👥</div><p>Nenhum dado encontrado</p></td></tr>`;
+        return;
+    }
+
+    const bench = 8; // benchmark pts/dia
+
+    // Média de pontos da equipe (todos os filtrados)
+    const totalPtsEquipe = filtrados.reduce((s, d) => s + d.pontosFinalizados, 0);
+    const mediaEquipe    = filtrados.length > 0 ? totalPtsEquipe / filtrados.length : 0;
+
+    tbody.innerHTML = filtrados.map(d => {
+        const cor = d.mediaDiaria >= bench ? 'var(--success)'
+                  : d.mediaDiaria >= bench * 0.8 ? 'var(--warning)'
+                  : d.mediaDiaria > 0 ? 'var(--danger)' : 'var(--text-muted)';
+
+        let vsHtml;
+        if (mediaEquipe === 0 || d.pontosFinalizados === 0) {
+            vsHtml = '<span style="color:var(--text-muted);font-size:0.85rem;">—</span>';
+        } else {
+            const diff  = (d.pontosFinalizados - mediaEquipe) / mediaEquipe * 100;
+            const sinal = diff >= 0 ? '+' : '';
+            const corVs = diff >= 0 ? 'var(--success)' : 'var(--danger)';
+            vsHtml = '<span style="font-weight:700;font-family:var(--code-font);font-size:0.9rem;color:' + corVs + ';">' + sinal + diff.toFixed(1) + '%</span>'
+                   + '<div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;">ref. equipe: ' + mediaEquipe.toFixed(1) + ' pts</div>';
+        }
+
+        return `
+        <tr style="cursor:pointer;" onclick="verDetalhesServidor(${d.id})">
+            <td><span class="ponto-badge">P${d.ponto}</span></td>
+            <td>${d.nome}</td>
+            <td><span class="area-badge">${d.area}</span></td>
+            <td style="text-align:center;font-weight:600;">${d.qtdTotal > 0 ? d.qtdTotal : '<span style="color:var(--text-muted);">—</span>'}</td>
+            <td>${d.qtdAndamento    > 0 ? `<span style="color:var(--warning);font-weight:600;">${d.qtdAndamento}</span>`    : '<span style="color:var(--text-muted);">—</span>'}</td>
+            <td>${d.qtdFinalizados  > 0 ? `<span style="color:var(--success);font-weight:600;">${d.qtdFinalizados}</span>`  : '<span style="color:var(--text-muted);">—</span>'}</td>
+            <td>${d.qtdNaoConcluido > 0 ? `<span style="color:#818cf8;font-weight:600;">${d.qtdNaoConcluido}</span>` : '<span style="color:var(--text-muted);">—</span>'}</td>
+            <td><span class="points-cell">${d.pontosFinalizados}</span></td>
+            <td>
+                <span class="code-badge" style="color:${cor};">${d.mediaDiaria}</span>
+                ${d.diasTrabalhados > 0 ? `<div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem;">${d.diasTrabalhados} dias</div>` : '<div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem;">sem registro</div>'}
+            </td>
+            <td>${vsHtml}</td>
+        </tr>`;
+    }).join('');
+}
+
+function verDetalhesServidor(id) {
+    const servidor = colaboradores.find(c => c.id === id);
+    if (servidor) {
+        CurrentServer.set(servidor);
+        window.location.href = '../index.html';
+    }
+}
+
+function setupEventListeners() {
+    const searchBox = document.getElementById('searchBox');
+    if (searchBox) {
+        searchBox.addEventListener('input', Utils.debounce(e => renderTable(e.target.value), 300));
+    }
+}
