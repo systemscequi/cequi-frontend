@@ -330,13 +330,16 @@ if (_currentPage === "login.html") {
 
         form.addEventListener("submit", function(e) {
             e.preventDefault();
-            var ponto = document.getElementById("ponto").value.trim();
+            var pontoRaw = document.getElementById("ponto").value.trim().toUpperCase();
             var senha = document.getElementById("senha").value;
 
-            // Validação básica no frontend
-            if (!ponto || isNaN(parseInt(ponto))) {
+            // Aceita P_703150, P703150, ou só 703150
+            var pontoNum = pontoRaw.replace(/^P_?/i, '').replace(/\D/g, '');
+            var ponto = parseInt(pontoNum);
+
+            if (!pontoNum || isNaN(ponto) || ponto < 1) {
                 var errEl = document.getElementById("loginError");
-                if (errEl) { errEl.textContent = "Informe um número de ponto válido."; errEl.style.display = "flex"; }
+                if (errEl) { errEl.textContent = "Informe o ponto no formato P_703150."; errEl.style.display = "flex"; }
                 return;
             }
             if (!senha || senha.length < 4) {
@@ -386,9 +389,9 @@ if (_currentPage === "login.html") {
             }
         });
 
-        window.quickLogin = function(ponto, senha) {
-            document.getElementById("ponto").value  = ponto;
-            document.getElementById("senha").value  = senha || "cequi2026";
+        window.quickLogin = function(pontoVal, senhaVal) {
+            document.getElementById("ponto").value  = pontoVal;
+            document.getElementById("senha").value  = senhaVal || "cequi2026";
             form.dispatchEvent(new Event("submit"));
         };
     });

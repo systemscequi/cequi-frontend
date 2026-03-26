@@ -159,8 +159,11 @@
             <form id="loginForm" autocomplete="off" style="flex:1;display:flex;flex-direction:column;gap:0;">
                 <div class="form-group">
                     <label class="form-label">Número do Ponto</label>
-                    <input type="number" class="form-input" id="ponto"
-                        placeholder="Ex: 1, 2 … 11" min="1" max="99" required autofocus>
+                    <input type="text" class="form-input" id="ponto"
+                        placeholder="P_703150" maxlength="11" required autofocus
+                        style="letter-spacing:1px;"
+                        oninput="this.value=this.value.toUpperCase()">
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-top:0.3rem;">Digite no formato P_<em>número</em> — ex: P_703150</div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Senha</label>
