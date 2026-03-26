@@ -28,7 +28,8 @@
                 <a href="nova-atividade.html" class="nav-btn">Nova Atividade</a>
                 <a href="visao-equipe.html" class="nav-btn">Equipe</a>
                 <a href="relatorios.html" class="nav-btn">Relatórios</a>
-                <a href="configuracoes.html" class="nav-btn">Configurações</a>
+                <a href="controle-presenca.html" class="nav-btn nav-user-only">Controle de Presença</a>
+                <a href="configuracoes.html" class="nav-btn nav-admin-only">Configurações</a>
                 <a href="tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
             </nav>
             <div class="header-right" id="headerRight"></div>
@@ -75,17 +76,14 @@
                     <option value="8">Setembro</option><option value="9">Outubro</option>
                     <option value="10">Novembro</option><option value="11">Dezembro</option>
                 </select>
-                <select id="listaAnoSelect" onchange="aplicarFiltroMes()" style="padding:0.35rem 0.7rem;background:var(--bg-mid);border:1px solid var(--border);color:var(--text-primary);font-family:var(--code-font);font-size:0.85rem;font-weight:600;border-radius:6px;cursor:pointer;"></select>
+                <select id="listaAnoSelect" onchange="aplicarFiltroMes()" style="padding:0.35rem 0.7rem;background:var(--bg-mid);border:1px solid var(--border);color:var(--text-primary);font-family:var(--code-font);font-size:0.85rem;font-weight:600;border-radius:6px;cursor:pointer;"><option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option><option value="2029">2029</option><option value="2030">2030</option><option value="2031">2031</option><option value="2032">2032</option><option value="2033">2033</option><option value="2034">2034</option><option value="2035">2035</option><option value="2036">2036</option></select>
                 
                 
             </div>
 
             <!-- Filtros de status -->
             <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap:wrap;">
-                <button class="btn btn-secondary filter-btn active" onclick="filtrarPorStatus('todos')">Todos</button>
-                <button class="btn btn-secondary filter-btn" onclick="filtrarPorStatus('em-andamento')">Em Andamento</button>
-                <button class="btn btn-secondary filter-btn" onclick="filtrarPorStatus('finalizado')">Finalizados</button>
-                <button class="btn btn-secondary filter-btn" onclick="filtrarPorStatus('nao-concluido')">Não Concluídos</button>
+<!-- Filtro de status por clique na coluna -->
             </div>
 
             <div class="table-wrapper"><table>
@@ -97,7 +95,7 @@
                         <th style="white-space:nowrap;cursor:pointer;user-select:none;" onclick="sortListaProdutos('duracao')" id="th-duracao">Duração <span id="sort-duracao"></span></th>
                         <th>Atividades</th>
                         <th style="cursor:pointer;user-select:none;" onclick="sortListaProdutos('pontos')" id="th-pontos">Pontos <span id="sort-pontos"></span></th>
-                        <th>Status</th>
+                        <th style="cursor:pointer;user-select:none;" onclick="sortListaProdutos('status')" id="th-status">Status <span id="sort-status"></span></th>
                         <th>Ações</th>
                     </tr>
                 </thead>

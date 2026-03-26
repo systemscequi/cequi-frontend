@@ -194,12 +194,20 @@ class AuthManager {
 
     // ── Oculta itens de nav que user não pode ver ─────────────────────
     _filterNav(isAdmin) {
-        if (isAdmin) return;
         var links = document.querySelectorAll(".header-nav a, .mobile-nav a");
         links.forEach(function(link) {
             var href = link.getAttribute("href") || "";
             var page = href.split("/").pop().split("?")[0];
-            if (ADMIN_NAV_PAGES.indexOf(page) !== -1) {
+            // Hide admin-only pages from users
+            if (!isAdmin && ADMIN_NAV_PAGES.indexOf(page) !== -1) {
+                link.style.display = "none";
+            }
+            // Hide items marked admin-only via class
+            if (!isAdmin && link.classList.contains("nav-admin-only")) {
+                link.style.display = "none";
+            }
+            // Hide items marked user-only from admin
+            if (isAdmin && link.classList.contains("nav-user-only")) {
                 link.style.display = "none";
             }
         });

@@ -3,7 +3,7 @@
  * Complexidade numérica (0.5–8), área automática, busca, persistência real
  */
 
-let produto = { codigo: '', nome: '', dataInicio: '', dataFim: '', observacoes: '', atividades: [] };
+let produto = { codigo: '', nome: '', dataInicio: '', dataFim: '', observacoes: '', entregas: '', atividades: [] };
 let currentStep = 1;
 let categoriaAtual = 'DGSPI';
 let atividadeSelecionada = null;
@@ -110,6 +110,10 @@ function renderStep1() {
                     <label class="form-label">Observações</label>
                     <textarea class="form-textarea" id="observacoes" placeholder="Observações gerais...">${produto.observacoes}</textarea>
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Entregas</label>
+                    <textarea class="form-textarea" id="entregas" placeholder="Descreva as entregas deste produto..." style="min-height:80px;">${produto.entregas || ''}</textarea>
+                </div>
                 <div class="btn-group">
                     <button class="btn btn-primary" onclick="salvarStep1()">✓ Adicionar</button>
                 </div>
@@ -169,113 +173,125 @@ function renderStep1() {
 }
 
 // ── Modal de reaproveitamento ─────────────────────────────────────────────────
-function abrirModalReaproveitar() {
-    const server = CurrentServer.get();
-    if (!server) { Utils.showError('Selecione um servidor primeiro!'); return; }
-
-    // Buscar todos os produtos do servidor
-    const todosProdutos = (DataStore.get('produtos_todos') || []).filter(p => p.servidorId === server.id);
+async function abrirModalReaproveitar() {
+    // Carregar todos os produtos do banco (não só do servidor atual)
+    let todosProdutos = [];
+    try {
+        const result = await MockAPI.getProdutos(); // sem servidorId = todos (admin) ou próprios (user)
+        if (result && result.success) todosProdutos = result.data;
+    } catch(e) {
+        todosProdutos = DataStore.getProdutos() || [];
+    }
 
     if (!todosProdutos || todosProdutos.length === 0) {
-        Notify.warning('Nenhum produto anterior encontrado para este servidor.');
+        Notify.warning('Nenhum produto encontrado na base de dados.');
         return;
     }
 
-    // Ordenar por data de início decrescente
-    const ordenados = [...todosProdutos].sort((a, b) => (b.dataInicio || '').localeCompare(a.dataInicio || ''));
+    // Montar lista de meses disponíveis
+    const mesesDisp = [...new Set(
+        todosProdutos
+            .filter(p => p.dataInicio)
+            .map(p => p.dataInicio.substring(0, 7))
+    )].sort().reverse();
 
-    // Agrupar por mês
-    const porMes = {};
-    ordenados.forEach(p => {
-        const mesKey = p.dataInicio ? p.dataInicio.substring(0, 7) : 'Sem data';
-        if (!porMes[mesKey]) porMes[mesKey] = [];
-        porMes[mesKey].push(p);
-    });
+    const mesAtual = mesesDisp[0] || new Date().toISOString().substring(0, 7);
 
-    const mesesHTML = Object.entries(porMes).map(([mes, prods]) => {
-        const [ano, m] = mes.split('-');
-        const nomeMes = mes === 'Sem data' ? 'Sem data' :
-            new Date(parseInt(ano), parseInt(m) - 1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    function getNomeMes(mesKey) {
+        if (!mesKey || mesKey === 'Sem data') return 'Sem data';
+        const [ano, m] = mesKey.split('-');
+        return new Date(parseInt(ano), parseInt(m) - 1, 1)
+            .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+    }
 
-        const itens = prods.map(p => {
+    function renderListaReap(mesFiltro, textoBusca) {
+        let filtrados = todosProdutos.filter(p => {
+            if (!p.dataInicio) return false;
+            if (mesFiltro && p.dataInicio.substring(0, 7) !== mesFiltro) return false;
+            if (textoBusca) {
+                const t = textoBusca.toLowerCase();
+                if (!p.nome.toLowerCase().includes(t) && !(p.codigo||'').toLowerCase().includes(t)) return false;
+            }
+            return true;
+        });
+        filtrados.sort((a, b) => (b.dataInicio || '').localeCompare(a.dataInicio || ''));
+
+        if (filtrados.length === 0) return '<div style="padding:1.5rem;text-align:center;color:var(--text-muted);">Nenhum produto encontrado</div>';
+
+        return filtrados.map(p => {
             const totalPts = (p.atividades || []).reduce((s, a) => s + (a.pontos || 0), 0).toFixed(1);
-            const atvsHTML = (p.atividades || []).map(a => `
-                <div style="display:flex;justify-content:space-between;align-items:center;padding:0.4rem 0;border-bottom:1px solid var(--border);gap:0.5rem;">
-                    <div style="flex:1;min-width:0;">
-                        <span style="font-family:var(--code-font);font-size:0.75rem;color:var(--secondary-light);font-weight:700;">${a.codigo}</span>
-                        <span style="font-size:0.73rem;color:var(--text-secondary);margin-left:0.4rem;">${a.atividade.substring(0,65)}${a.atividade.length>65?'...':''}</span>
-                    </div>
-                    <div style="font-size:0.72rem;white-space:nowrap;color:var(--text-muted);">
-                        ${a.peso} × ${a.complexidade} = <strong style="color:var(--success);">${a.pontos} pts</strong>
-                    </div>
-                </div>`).join('');
+            const atvsHTML = (p.atividades || []).map(a =>
+                '<div style="display:flex;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border);gap:0.5rem;">'
+                + '<div style="flex:1;min-width:0;">'
+                + '<span style="font-family:var(--code-font);font-size:0.75rem;color:var(--secondary-light);font-weight:700;">' + a.codigo + '</span>'
+                + '<span style="font-size:0.73rem;color:var(--text-secondary);margin-left:0.4rem;">' + a.atividade + '</span>'
+                + '</div>'
+                + '<div style="font-size:0.72rem;white-space:nowrap;color:var(--text-muted);">'
+                + a.peso + ' x ' + a.complexidade + ' = <strong style="color:var(--success);">' + a.pontos + ' pts</strong>'
+                + '</div></div>'
+            ).join('');
 
-            return `
-            <div id="card-reap-${p.id}" style="background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;margin-bottom:0.5rem;overflow:hidden;transition:border-color 0.2s;">
-
-                <!-- Cabeçalho clicável (expande/recolhe) -->
-                <div onclick="toggleReapCard(${p.id})" style="padding:0.85rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;"
-                    onmouseover="document.getElementById('card-reap-${p.id}').style.borderColor='var(--primary)'"
-                    onmouseout="document.getElementById('card-reap-${p.id}').style.borderColor='var(--border)'">
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-family:var(--code-font);font-weight:700;color:var(--secondary-light);font-size:0.85rem;">
-                            #${p.codigo}
-                            <span style="font-weight:400;color:var(--text-muted);margin-left:0.5rem;font-size:0.75rem;">${p.atividades?.length || 0} atividades</span>
-                        </div>
-                        <div style="font-size:0.85rem;font-weight:600;margin-top:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.nome}</div>
-                        <div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">
-                            ${p.dataInicio ? Utils.formatDate(p.dataInicio) : '—'}
-                            ${p.dataFim ? ' → ' + Utils.formatDate(p.dataFim) : ' → Em andamento'}
-                        </div>
-                    </div>
-                    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;">
-                        <div style="font-size:1.3rem;font-weight:700;color:var(--accent);font-family:var(--code-font);">${totalPts}<span style="font-size:0.65rem;color:var(--text-muted);font-weight:400;margin-left:2px;">pts</span></div>
-                        <span id="arrow-${p.id}" style="font-size:0.7rem;color:var(--text-muted);">▼ ver atividades</span>
-                    </div>
-                </div>
-
-                <!-- Painel expansível -->
-                <div id="painel-reap-${p.id}" style="display:none;padding:0 1rem 0.75rem;border-top:1px solid var(--border);">
-                    <div style="padding-top:0.5rem;margin-bottom:0.75rem;">
-                        ${atvsHTML}
-                    </div>
-                    <button onclick="confirmarReaproveitar(${p.id})" class="btn btn-primary" style="width:100%;font-size:0.85rem;">
-                        Importar este produto
-                    </button>
-                </div>
-            </div>`;
+            return '<div id="card-reap-' + p.id + '" style="background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;margin-bottom:0.5rem;overflow:hidden;">'
+                + '<div onclick="toggleReapCard(' + p.id + ')" style="padding:0.85rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;"'
+                + ' onmouseover="document.getElementById(\'card-reap-' + p.id + '\').style.borderColor=\'var(--primary)\'"'
+                + ' onmouseout="document.getElementById(\'card-reap-' + p.id + '\').style.borderColor=\'var(--border)\'">'
+                + '<div style="flex:1;min-width:0;">'
+                + '<div style="font-family:var(--code-font);font-weight:700;color:var(--secondary-light);font-size:0.85rem;">#' + p.codigo
+                + '<span style="font-weight:400;color:var(--text-muted);margin-left:0.5rem;font-size:0.75rem;">' + (p.atividades?.length || 0) + ' atividades</span></div>'
+                + '<div style="font-size:0.85rem;font-weight:600;margin-top:0.2rem;">' + p.nome + '</div>'
+                + '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">'
+                + (p.dataInicio ? Utils.formatDate(p.dataInicio) : '—')
+                + (p.dataFim ? ' → ' + Utils.formatDate(p.dataFim) : ' → Em andamento') + '</div>'
+                + '</div>'
+                + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;">'
+                + '<div style="font-size:1.3rem;font-weight:700;color:var(--accent);font-family:var(--code-font);">' + totalPts
+                + '<span style="font-size:0.65rem;color:var(--text-muted);margin-left:2px;">pts</span></div>'
+                + '<span id="arrow-' + p.id + '" style="font-size:0.7rem;color:var(--text-muted);">▼ ver atividades</span>'
+                + '</div></div>'
+                + '<div id="painel-reap-' + p.id + '" style="display:none;padding:0 1rem 0.75rem;border-top:1px solid var(--border);">'
+                + '<div style="padding-top:0.5rem;margin-bottom:0.75rem;">' + atvsHTML + '</div>'
+                + '<button onclick="confirmarReaproveitar(' + p.id + ')" class="btn btn-primary" style="width:100%;font-size:0.85rem;">Importar este produto</button>'
+                + '</div></div>';
         }).join('');
-
-        return `
-            <div style="margin-bottom:1.25rem;">
-                <div style="font-size:0.75rem;font-weight:700;text-transform:uppercase;color:var(--text-muted);letter-spacing:0.05em;margin-bottom:0.5rem;padding-bottom:0.25rem;border-bottom:1px solid var(--border);">
-                    ${nomeMes}
-                </div>
-                ${itens}
-            </div>`;
-    }).join('');
+    }
 
     const overlay = document.createElement('div');
     overlay.id = 'modalReaproveitar';
     overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:20000;display:flex;align-items:center;justify-content:center;animation:fadeIn 0.15s ease;padding:1rem;';
-    overlay.innerHTML = `
-        <div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:14px;padding:1.75rem;width:100%;max-width:520px;max-height:80vh;display:flex;flex-direction:column;animation:scaleIn 0.2s ease;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem;">
-                <div>
-                    <h3 style="font-size:1.05rem;margin:0;">Reaproveitar Produto</h3>
-                    <p style="font-size:0.78rem;color:var(--text-muted);margin:0.2rem 0 0;">Clique no produto para importar dados e atividades</p>
-                </div>
-                <button onclick="document.getElementById('modalReaproveitar').remove()"
-                    style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.4rem;line-height:1;padding:0 0.25rem;">&times;</button>
-            </div>
-            <div style="overflow-y:auto;flex:1;padding-right:0.25rem;">
-                ${mesesHTML}
-            </div>
-        </div>`;
+
+    const mesOpts = mesesDisp.map(m => '<option value="' + m + '">' + getNomeMes(m) + '</option>').join('');
+
+    overlay.innerHTML = '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:14px;padding:1.75rem;width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;">'
+        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">'
+        + '<div><h3 style="font-size:1.05rem;margin:0;">Reaproveitar Produto</h3>'
+        + '<p style="font-size:0.78rem;color:var(--text-muted);margin:0.2rem 0 0;">Selecione um produto da base para importar</p></div>'
+        + '<button onclick="document.getElementById(\'modalReaproveitar\').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.4rem;">&times;</button>'
+        + '</div>'
+        + '<div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">'
+        + '<select id="reapMesSelect" style="padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;cursor:pointer;">'
+        + '<option value="">Todos os meses</option>' + mesOpts
+        + '</select>'
+        + '<input type="text" id="reapBusca" placeholder="Buscar por nome ou código..." style="flex:1;min-width:150px;padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;">'
+        + '</div>'
+        + '<div id="reapLista" style="overflow-y:auto;flex:1;padding-right:0.25rem;">' + renderListaReap(mesAtual, '') + '</div>'
+        + '</div>';
 
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+    // Atualizar lista ao mudar filtros
+    const selMes  = overlay.querySelector('#reapMesSelect');
+    const inpBusc = overlay.querySelector('#reapBusca');
+    selMes.value = mesAtual;
+
+    function atualizarLista() {
+        overlay.querySelector('#reapLista').innerHTML = renderListaReap(selMes.value, inpBusc.value.trim());
+    }
+    selMes.addEventListener('change', atualizarLista);
+    inpBusc.addEventListener('input', Utils.debounce ? Utils.debounce(atualizarLista, 250) : atualizarLista);
 }
+
+
 
 function toggleReapCard(prodId) {
     const painel = document.getElementById(`painel-reap-${prodId}`);
@@ -287,10 +303,10 @@ function toggleReapCard(prodId) {
 }
 
 function confirmarReaproveitar(produtoId) {
-    const server = CurrentServer.get();
-    const todos = (DataStore.get('produtos_todos') || []).filter(p => p.servidorId === server.id);
-    const original = todos.find(p => p.id === produtoId);
-    if (!original) return;
+    // Buscar em todos os produtos disponíveis (não apenas do servidor atual)
+    const todos = DataStore.getProdutos() || [];
+    const original = todos.find(p => p.id === produtoId || p.id === parseInt(produtoId));
+    if (!original) { Notify.error('Produto não encontrado.'); return; }
 
     document.getElementById('modalReaproveitar')?.remove();
 
@@ -298,6 +314,7 @@ function confirmarReaproveitar(produtoId) {
     produto.codigo      = ''; // será gerado automaticamente ao salvar
     produto.nome        = original.nome;
     produto.observacoes = original.observacoes || '';
+    produto.entregas   = original.entregas   || '';
     produto.dataInicio  = '';
     produto.dataFim     = null;
     produto.atividades  = (original.atividades || []).map(a => ({ ...a }));
@@ -325,6 +342,7 @@ async function salvarStep1() {
     produto.dataInicio  = document.getElementById('dataInicio').value;
     produto.dataFim     = document.getElementById('dataFim').value || null;
     produto.observacoes = document.getElementById('observacoes').value.trim();
+    produto.entregas   = document.getElementById('entregas')?.value.trim() || '';
 
     if (!produto.nome || !produto.dataInicio) {
         Utils.showError('Preencha os campos obrigatórios: Nome e Data de Início');
@@ -631,7 +649,7 @@ async function salvarProduto() {
         Utils.showSuccess('Produto salvo com sucesso!');
         setTimeout(() => {
             Notify.confirm('Cadastrar outro produto?', () => {
-                produto = { codigo: '', nome: '', dataInicio: '', dataFim: '', observacoes: '', atividades: [] };
+                produto = { codigo: '', nome: '', dataInicio: '', dataFim: '', observacoes: '', entregas: '', atividades: [] };
                 atividadeSelecionada = null; complexidadeSelecionada = null; buscaAtividade = '';
                 nextStep(1);
             }, () => {
@@ -648,6 +666,7 @@ function validarDadosStep1() {
         produto.dataInicio  = document.getElementById('dataInicio')?.value           || produto.dataInicio;
         produto.dataFim     = document.getElementById('dataFim')?.value              || produto.dataFim || null;
         produto.observacoes = document.getElementById('observacoes')?.value.trim()   || produto.observacoes;
+        produto.entregas   = document.getElementById('entregas')?.value.trim()      || produto.entregas;
     }
     if (!produto.nome)       { Notify.warning('Preencha o Nome do produto.');           return false; }
     if (!produto.dataInicio) { Notify.warning('Preencha a Data de Início do produto.'); return false; }

@@ -8,7 +8,24 @@ let filtroMesAno = null;
 let sortColuna = null;    // 'codigo' | 'duracao' | 'pontos'
 let sortAsc    = true;
 
+const STATUS_CYCLE = ['todos', 'em-andamento', 'finalizado', 'nao-concluido'];
+const STATUS_LABELS = { 'todos':'Todos', 'em-andamento':'Em Andamento', 'finalizado':'Finalizado', 'nao-concluido':'Não Concluído' };
+
 function sortListaProdutos(coluna) {
+    if (coluna === 'status') {
+        // Cicla entre os status
+        const idx = STATUS_CYCLE.indexOf(filtroStatus);
+        filtroStatus = STATUS_CYCLE[(idx + 1) % STATUS_CYCLE.length];
+        // Atualizar indicador visual
+        ['codigo','duracao','pontos'].forEach(c => {
+            const el = document.getElementById('sort-' + c);
+            if (el) el.textContent = '';
+        });
+        const el = document.getElementById('sort-status');
+        if (el) el.textContent = filtroStatus === 'todos' ? '' : ' (' + STATUS_LABELS[filtroStatus] + ')';
+        renderizarTabela();
+        return;
+    }
     if (sortColuna === coluna) {
         sortAsc = !sortAsc;
     } else {
@@ -16,7 +33,7 @@ function sortListaProdutos(coluna) {
         sortAsc = true;
     }
     // Atualizar indicadores visuais
-    ['codigo','duracao','pontos'].forEach(c => {
+    ['codigo','duracao','pontos','status'].forEach(c => {
         const el = document.getElementById('sort-' + c);
         if (el) el.textContent = '';
     });
@@ -104,7 +121,8 @@ function initListaMesAno() {
     }
     selMes.value = ''; // padrão: todos
 
-    const anos = [anoAtual, anoAtual - 1, anoAtual - 2];
+    const anos = [];
+    for (let a = 2026; a <= 2036; a++) anos.push(a);
     selAno.innerHTML = anos.map(a =>
         `<option value="${a}"${a === anoAtual ? ' selected' : ''}>${a}</option>`
     ).join('');
@@ -389,9 +407,15 @@ function abrirModalDetalhe(prod) {
             </div>
 
             ${prod.observacoes ? `
-            <div style="background:var(--bg-mid);padding:1.25rem;border-radius:10px;border:1px solid var(--border);margin-bottom:2rem;">
+            <div style="background:var(--bg-mid);padding:1.25rem;border-radius:10px;border:1px solid var(--border);margin-bottom:1rem;">
                 <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:0.5rem;">Observações</div>
                 <div style="color:var(--text-secondary);font-size:0.95rem;line-height:1.6;">${prod.observacoes}</div>
+            </div>` : ''}
+
+            ${prod.entregas ? `
+            <div style="background:var(--bg-mid);padding:1.25rem;border-radius:10px;border:1px solid var(--border);margin-bottom:2rem;">
+                <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:0.5rem;">Entregas</div>
+                <div style="color:var(--text-secondary);font-size:0.95rem;line-height:1.6;">${prod.entregas}</div>
             </div>` : ''}
 
             <!-- Tabela de atividades -->
@@ -581,6 +605,10 @@ function editarProduto(id) {
                 <label class="form-label">Observações</label>
                 <textarea class="form-textarea" id="edit-obs">${prod.observacoes || ''}</textarea>
             </div>
+            <div class="form-group">
+                <label class="form-label">Entregas</label>
+                <textarea class="form-textarea" id="edit-entregas" style="min-height:80px;">${prod.entregas || ''}</textarea>
+            </div>
             <div style="display:flex;gap:0.75rem;margin-top:1.5rem;">
                 <button class="btn btn-primary" id="edit-salvar" style="flex:1;">💾 Salvar</button>
                 <button class="btn btn-secondary" onclick="this.closest('div[style*=fixed]').remove()">Cancelar</button>
@@ -597,6 +625,7 @@ function editarProduto(id) {
         const inicio      = overlay.querySelector('#edit-inicio').value;
         const fim         = overlay.querySelector('#edit-fim').value || null;
         const obs         = overlay.querySelector('#edit-obs').value.trim();
+        const entregas    = overlay.querySelector('#edit-entregas').value.trim();
         const novoStatus  = overlay.querySelector('#edit-status').value;
 
         if (!codigo || !nome || !inicio) { Notify.error('Preencha os campos obrigatórios'); return; }
@@ -610,7 +639,7 @@ function editarProduto(id) {
         // Se status for em-andamento, limpar data fim
         if (novoStatus === 'em-andamento') dataFimFinal = null;
 
-        const upd = { ...prod, codigo, nome, dataInicio: inicio, dataFim: dataFimFinal, observacoes: obs, status: novoStatus };
+        const upd = { ...prod, codigo, nome, dataInicio: inicio, dataFim: dataFimFinal, observacoes: obs, entregas, status: novoStatus };
         const result = await MockAPI.updateProduto(id, upd);
         if (result.success) {
             overlay.remove();
@@ -651,14 +680,17 @@ function excluirProduto(id) {
     Notify.confirm(
         `Deseja realmente excluir o produto "${produto.nome}"?`,
         async () => {
-            const loading = Notify.loading('Excluindo produto...');
-            
-            setTimeout(async () => {
-                DataStore.deleteProduto(id);
-                await loadProdutos();
-                loading.remove();
-                Notify.success('Produto excluído com sucesso!');
-            }, 500);
+            try {
+                const result = await MockAPI.deleteProduto(id);
+                if (result && result.success) {
+                    await loadProdutos();
+                    Notify.success('Produto excluído com sucesso!');
+                } else {
+                    Notify.error(result?.message || 'Erro ao excluir produto.');
+                }
+            } catch(e) {
+                Notify.error('Erro de conexão ao excluir produto.');
+            }
         }
     );
 }

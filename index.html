@@ -26,9 +26,10 @@
                 <a href="pages/cadastro-produtos.html" class="nav-btn">Novo Produto</a>
                 <a href="pages/lista-produtos.html" class="nav-btn">Lista de Produtos</a>
                 <a href="pages/nova-atividade.html" class="nav-btn">Nova Atividade</a>
+                <a href="pages/controle-presenca.html" class="nav-btn nav-user-only">Controle de Presença</a>
                 <a href="pages/visao-equipe.html" class="nav-btn">Equipe</a>
                 <a href="pages/relatorios.html" class="nav-btn">Relatórios</a>
-                <a href="pages/configuracoes.html" class="nav-btn">Configurações</a>
+                <a href="pages/configuracoes.html" class="nav-btn nav-admin-only">Configurações</a>
                 <a href="pages/tutorial.html" class="nav-btn nav-btn-tutorial">Tutorial</a>
             </nav>
             <div class="header-right" id="headerRight"></div>
@@ -103,11 +104,21 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="stat-label">Produtividade Média Diária</div>
+                    <div class="stat-label">Produtividade Média Diária Concluída</div>
                 </div>
                 <div class="stat-value" id="produtividadeMedia">-</div>
                 <div class="stat-meta">
-                    <span>Meta: <span id="metaDiaria">-</span></span>
+                    <span>Meta individual do servidor (pontos/dia): <span id="metaDiaria">-</span></span>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-label">Produtividade Média Diária Esperada</div>
+                </div>
+                <div class="stat-value" id="produtividadeEsperada">-</div>
+                <div class="stat-meta">
+                    <span>Total do mês ÷ dias trabalhados</span>
                 </div>
             </div>
 
@@ -123,11 +134,11 @@
 
             <div class="stat-card">
                 <div class="stat-header">
-                    <div class="stat-label">Vs. Equipe</div>
+                    <div class="stat-label">Meta Relativa Individual (MRI)</div>
                 </div>
                 <div class="stat-value" id="vsEquipeValor" style="font-size:1.6rem;">-</div>
                 <div class="stat-meta">
-                    <span>Média equipe: <span id="vsEquipeMedia">-</span> pts</span>
+                    <span>MRC × 0,8: <span id="vsEquipeMedia">-</span> pts/dia</span>
                 </div>
             </div>
 
@@ -183,11 +194,22 @@
                         <a href="pages/cadastro-produtos.html" class="add-product-btn">+ Novo</a>
                     </div>
                 </div>
-                <div class="products-list" id="productsList">
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <p>Nenhum produto cadastrado</p>
-                    </div>
+                <div style="overflow-x:auto;">
+                    <table style="width:100%;border-collapse:collapse;font-size:0.88rem;">
+                        <thead>
+                            <tr style="border-bottom:2px solid var(--border);">
+                                <th onclick="sortDashProdutos('codigo')" style="cursor:pointer;user-select:none;padding:0.6rem 0.75rem;text-align:left;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;">Código <span id="dsort-codigo"></span></th>
+                                <th onclick="sortDashProdutos('nome')" style="cursor:pointer;user-select:none;padding:0.6rem 0.75rem;text-align:left;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;">Produto <span id="dsort-nome"></span></th>
+                                <th style="padding:0.6rem 0.75rem;text-align:left;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;">Período</th>
+                                <th onclick="sortDashProdutos('atividades')" style="cursor:pointer;user-select:none;padding:0.6rem 0.75rem;text-align:center;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;">Atividades <span id="dsort-atividades"></span></th>
+                                <th onclick="sortDashProdutos('status')" style="cursor:pointer;user-select:none;padding:0.6rem 0.75rem;text-align:left;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;">Status <span id="dsort-status"></span></th>
+                                <th onclick="sortDashProdutos('pontos')" style="cursor:pointer;user-select:none;padding:0.6rem 0.75rem;text-align:right;color:var(--text-muted);font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;">Pontos <span id="dsort-pontos"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsList">
+                            <tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);">Carregando...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>

@@ -67,8 +67,9 @@ function initMonthSelect() {
         `<option value="${String(idx + 1).padStart(2, '0')}"${idx + 1 === mesAtual ? ' selected' : ''}>${m}</option>`
     ).join('');
 
-    // Anos: ano atual e os 2 anteriores
-    const anos = [anoAtual, anoAtual - 1, anoAtual - 2];
+    // Anos: 2026 a 2036
+    const anos = [];
+    for (let a = 2026; a <= 2036; a++) anos.push(a);
     selAno.innerHTML = anos.map(a =>
         `<option value="${a}"${a === anoAtual ? ' selected' : ''}>${a}</option>`
     ).join('');
@@ -291,109 +292,126 @@ function updateStats() {
     document.getElementById('qtdAndamento').textContent   = qtdPorStatus['em-andamento'];
     document.getElementById('qtdFinalizados').textContent = qtdPorStatus['finalizado'];
 
-    // Produtividade média diária (finalizados / dias trabalhados)
-    const produtividadeMedia = diasTrabalhados > 0 
-        ? (pontuacaoFinalizados / diasTrabalhados).toFixed(2) 
+    // Produtividade Média Diária Concluída (pontos finalizados / dias trabalhados)
+    const produtividadeMedia = diasTrabalhados > 0
+        ? (pontuacaoFinalizados / diasTrabalhados).toFixed(2)
         : '0.00';
     document.getElementById('produtividadeMedia').textContent = produtividadeMedia;
 
-    // Meta diária
+    // Meta individual do servidor
     const servidor = (window.MOCK_COLABORADORES||[]).find(c => c.id === currentServerId);
     const metaDiaria = servidor ? ((window.BENCHMARK_AREA||{})[servidor.area] || 8) : 8;
     document.getElementById('metaDiaria').textContent = metaDiaria;
 
-    // Desempenho Relativo — média de pontos finalizados de todos os servidores no mesmo mês
-    try {
-        const todosColabs = (window.MOCK_COLABORADORES||[]).filter(c => c.role !== 'admin');
-        const todosProdutos = DataStore.getProdutos();
-        const [anoM, mesM] = mesAno.split('-').map(Number);
-        const inicioMes = new Date(anoM, mesM-1, 1);
-        const fimMes    = new Date(anoM, mesM, 0);
+    // Produtividade Média Diária Esperada (todos os pontos do mês / dias trabalhados)
+    const produtividadeEsperada = diasTrabalhados > 0
+        ? (pontuacaoTotal / diasTrabalhados).toFixed(2)
+        : '0.00';
+    const elEsp = document.getElementById('produtividadeEsperada');
+    if (elEsp) elEsp.textContent = produtividadeEsperada;
 
-        let somaPtsEquipe = 0;
-        let countEquipe   = 0;
+    // MRI = MRC × 0,8  (MRC = Σ pts finalizados todos servidores / Σ dias trabalhados todos)
+    try {
+        const todosColabs   = (window.MOCK_COLABORADORES||[]).filter(c => c.role !== 'admin' && c.area !== 'CEQUI');
+        const todosProdutos = DataStore.getProdutos();
+
+        let mrcPts  = 0;
+        let mrcDias = 0;
         todosColabs.forEach(col => {
-            const prods = todosProdutos.filter(p => {
-                if (p.servidorId !== col.id || p.status !== 'finalizado') return false;
-                const ini = p.dataInicio ? new Date(p.dataInicio+'T00:00:00') : null;
-                const fim = p.dataFim    ? new Date(p.dataFim+'T00:00:00')    : null;
-                return ini && ini <= fimMes && fim && fim >= inicioMes;
-            });
-            const pts = prods.reduce((s,p) => s + (p.atividades||[]).reduce((sa,a) => sa+(a.pontos||0),0), 0);
-            somaPtsEquipe += pts;
-            countEquipe++;
+            const prodsMes = todosProdutos.filter(p =>
+                p.servidorId === col.id &&
+                p.status === 'finalizado' &&
+                p.dataInicio && p.dataInicio.substring(0,7) === mesAno
+            );
+            prodsMes.forEach(p => (p.atividades||[]).forEach(a => { mrcPts += a.pontos||0; }));
+            const diasCol = window.PresencaManager
+                ? window.PresencaManager.getDiasTrabalhados(col.id, mesAno)
+                : 0;
+            mrcDias += diasCol;
         });
 
-        const mediaEquipe = countEquipe > 0 ? somaPtsEquipe / countEquipe : 0;
+        const mrc = mrcDias > 0 ? mrcPts / mrcDias : 0;
+        const mri = mrc * 0.8;
+
         const elMedia = document.getElementById('vsEquipeMedia');
         const elValor = document.getElementById('vsEquipeValor');
-        if (elMedia) elMedia.textContent = mediaEquipe.toFixed(1);
+        if (elMedia) elMedia.textContent = mri.toFixed(2);
 
         if (elValor) {
-            if (mediaEquipe === 0 || pontuacaoFinalizados === 0) {
+            if (mri === 0) {
                 elValor.textContent = '—';
                 elValor.style.color = '';
             } else {
-                const diff  = (pontuacaoFinalizados - mediaEquipe) / mediaEquipe * 100;
+                const mediaDiariaNum = parseFloat(produtividadeMedia);
+                const diff  = (mediaDiariaNum - mri) / mri * 100;
                 const sinal = diff >= 0 ? '+' : '';
                 elValor.textContent = sinal + diff.toFixed(1) + '%';
                 elValor.style.color = diff >= 0 ? 'var(--success)' : 'var(--danger)';
             }
         }
-    } catch(e) { console.warn('Desempenho Relativo erro:', e); }
+    } catch(e) { console.warn('MRI erro:', e); }
 
     document.getElementById('changePontos').textContent = produtos.length > 0
         ? `${produtos.length} produto${produtos.length !== 1 ? 's' : ''}` : '-';
 
 }
 
+let dashSortColuna = null;
+let dashSortAsc    = true;
+
+function sortDashProdutos(coluna) {
+    if (dashSortColuna === coluna) { dashSortAsc = !dashSortAsc; }
+    else { dashSortColuna = coluna; dashSortAsc = true; }
+    ['codigo','nome','atividades','status','pontos'].forEach(c => {
+        const el = document.getElementById('dsort-' + c);
+        if (el) el.textContent = '';
+    });
+    const el = document.getElementById('dsort-' + coluna);
+    if (el) el.textContent = dashSortAsc ? ' ▲' : ' ▼';
+    renderProducts();
+}
+
 function renderProducts() {
     const container = document.getElementById('productsList');
-    
     if (produtos.length === 0) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <div class="empty-state-icon">📝</div>
-                <p>Nenhum produto cadastrado</p>
-            </div>
-        `;
+        container.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:2rem;color:var(--text-muted);"><div style="font-size:2rem;margin-bottom:0.5rem;">📝</div><div>Nenhum produto cadastrado</div></td></tr>';
         return;
     }
-    
-    container.innerHTML = produtos.map(produto => {
-        const statusClass = getStatusClass(produto.status);
-        const statusText  = getStatusLabel(produto.status);
-        const totalPontos = produto.atividades?.reduce((s,a) => s + (a.pontos||0), 0) || 0;
-        const selecionado = filtroProdutoId === produto.id;
-        
+    let lista = [...produtos];
+    const STATUS_ORDER = {'em-andamento':1,'finalizado':2,'nao-concluido':3};
+    const STATUS_COR   = {'finalizado':'var(--success)','em-andamento':'var(--warning)','nao-concluido':'#818cf8'};
+    if (dashSortColuna) {
+        lista.sort((a, b) => {
+            let va, vb;
+            if (dashSortColuna === 'codigo')    { va=a.codigo||''; vb=b.codigo||''; return dashSortAsc?va.localeCompare(vb):vb.localeCompare(va); }
+            if (dashSortColuna === 'nome')       { va=a.nome||''; vb=b.nome||''; return dashSortAsc?va.localeCompare(vb):vb.localeCompare(va); }
+            if (dashSortColuna === 'atividades') { va=a.atividades?.length||0; vb=b.atividades?.length||0; return dashSortAsc?va-vb:vb-va; }
+            if (dashSortColuna === 'status')     { va=STATUS_ORDER[resolverStatus(a)]||0; vb=STATUS_ORDER[resolverStatus(b)]||0; return dashSortAsc?va-vb:vb-va; }
+            if (dashSortColuna === 'pontos')     { va=a.atividades?.reduce((s,x)=>s+(x.pontos||0),0)||0; vb=b.atividades?.reduce((s,x)=>s+(x.pontos||0),0)||0; return dashSortAsc?va-vb:vb-va; }
+            return 0;
+        });
+    }
+    container.innerHTML = lista.map((produto, idx) => {
+        const statusEfetivo = resolverStatus(produto);
+        const statusText    = getStatusLabel(statusEfetivo);
+        const statusCor     = STATUS_COR[statusEfetivo] || 'var(--text-muted)';
+        const totalPontos   = produto.atividades?.reduce((s,a) => s+(a.pontos||0), 0) || 0;
+        const numAtivs      = produto.atividades?.length || 0;
         let periodo = Utils.formatDate(produto.dataInicio);
-        if (produto.dataFim) {
-            periodo += ` → ${Utils.formatDate(produto.dataFim)}`;
-        } else {
-            periodo += ' → Em andamento';
-        }
-        
-        return `
-            <div class="product-item" id="prod-item-${produto.id}"
-                 onclick="selecionarProduto(${produto.id})"
-                 style="cursor:pointer;transition:all 0.2s;${selecionado ? 'border-left:3px solid var(--primary);background:var(--bg-light);' : 'border-left:3px solid transparent;'}">
-                <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">
-                    <div class="product-name" style="flex:1;">${produto.nome}</div>
-                    <button onclick="event.stopPropagation(); abrirModalProduto(${produto.id})"
-                            title="Editar produto"
-                            style="background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:6px;padding:0.25rem 0.55rem;cursor:pointer;font-size:1.2rem;line-height:1;flex-shrink:0;transition:all 0.15s;"
-                            onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary)'"
-                            onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-muted)'">✏️</button>
-                </div>
-                <div class="product-meta">
-                    <span>${periodo}</span>
-                    <span style="color:var(--text-muted);font-size:0.78rem;">${totalPontos.toFixed(2)} pts</span>
-                    <span class="status-badge ${statusClass}">${statusText}</span>
-                </div>
-            </div>
-        `;
+        if (produto.dataFim) periodo += ' → ' + Utils.formatDate(produto.dataFim);
+        else periodo += ' → Em andamento';
+        const rowBg = idx % 2 === 0 ? '' : 'var(--bg-dark)';
+        return '<tr style="cursor:pointer;" onclick="selecionarProduto(' + produto.id + ')" onmouseover="this.style.background=\'var(--bg-light)\'" onmouseout="this.style.background=\'' + rowBg + '\'">'
+            + '<td style="padding:0.55rem 0.75rem;"><span style="font-family:var(--code-font);font-size:0.82rem;color:var(--secondary-light);font-weight:700;">' + (produto.codigo||'—') + '</span></td>'
+            + '<td style="padding:0.55rem 0.75rem;font-weight:600;max-width:260px;"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + produto.nome + '</div></td>'
+            + '<td style="padding:0.55rem 0.75rem;font-size:0.82rem;color:var(--text-muted);white-space:nowrap;">' + periodo + '</td>'
+            + '<td style="padding:0.55rem 0.75rem;text-align:center;font-family:var(--code-font);">' + numAtivs + '</td>'
+            + '<td style="padding:0.55rem 0.75rem;"><span style="font-size:0.78rem;font-weight:600;color:' + statusCor + ';">' + statusText + '</span></td>'
+            + '<td style="padding:0.55rem 0.75rem;text-align:right;font-family:var(--code-font);font-weight:700;color:var(--accent);">' + totalPontos.toFixed(1) + '</td>'
+            + '</tr>';
     }).join('');
 }
+
 
 // ─── Selecionar produto → filtra atividades ──────────────────────────
 function selecionarProduto(prodId) {
