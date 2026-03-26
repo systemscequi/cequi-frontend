@@ -160,7 +160,7 @@ async function loadDashboardData(servidorId) {
             });
             
             updateResumoPresenca();
-            updateStats();
+            await updateStats();
             renderProducts();
             renderActivities();
         }
@@ -222,7 +222,7 @@ function updateResumoPresenca() {
     }
 }
 
-function updateStats() {
+async function updateStats() {
     const mesAno = getSelectedMesAno();
     const [ano, mes] = mesAno.split('-').map(Number);
     const dataRef = new Date(ano, mes - 1, 1);
@@ -310,17 +310,21 @@ function updateStats() {
     const elEsp = document.getElementById('produtividadeEsperada');
     if (elEsp) elEsp.textContent = produtividadeEsperada;
 
-    // MRI = MRC × 0,8  (MRC = Σ pts finalizados todos servidores / Σ dias trabalhados todos)
+    // MRI = MRC x 0,8  (MRC = Sum pts finalizados todos servidores / Sum dias trabalhados todos)
     try {
-        const todosColabs   = (window.MOCK_COLABORADORES||[]).filter(c => c.role !== 'admin' && c.area !== 'CEQUI');
-        const todosProdutos = DataStore.getProdutos();
+        // Buscar todos os produtos do banco sem filtrar por servidor
+        const resultTodos = await MockAPI.getProdutos();
+        const todosProdutos = (resultTodos && resultTodos.success) ? resultTodos.data : (DataStore.getProdutos() || []);
+
+        // Colaboradores excluindo CEQUI e admins
+        const todosColabs = DataStore.getColaboradores().filter(c => c.role !== 'admin' && c.area !== 'CEQUI');
 
         let mrcPts  = 0;
         let mrcDias = 0;
         todosColabs.forEach(col => {
             const prodsMes = todosProdutos.filter(p =>
                 p.servidorId === col.id &&
-                p.status === 'finalizado' &&
+                resolverStatus(p) === 'finalizado' &&
                 p.dataInicio && p.dataInicio.substring(0,7) === mesAno
             );
             prodsMes.forEach(p => (p.atividades||[]).forEach(a => { mrcPts += a.pontos||0; }));
@@ -335,19 +339,11 @@ function updateStats() {
 
         const elMedia = document.getElementById('vsEquipeMedia');
         const elValor = document.getElementById('vsEquipeValor');
+        // Mostrar MRC x 0,8 diretamente em pts/dia
         if (elMedia) elMedia.textContent = mri.toFixed(2);
-
         if (elValor) {
-            if (mri === 0) {
-                elValor.textContent = '—';
-                elValor.style.color = '';
-            } else {
-                const mediaDiariaNum = parseFloat(produtividadeMedia);
-                const diff  = (mediaDiariaNum - mri) / mri * 100;
-                const sinal = diff >= 0 ? '+' : '';
-                elValor.textContent = sinal + diff.toFixed(1) + '%';
-                elValor.style.color = diff >= 0 ? 'var(--success)' : 'var(--danger)';
-            }
+            elValor.textContent = mri > 0 ? mri.toFixed(2) + ' pts/dia' : '—';
+            elValor.style.color = '';
         }
     } catch(e) { console.warn('MRI erro:', e); }
 
