@@ -103,51 +103,30 @@ function calcularEstatisticas() {
     const subAndamento = document.getElementById('subAndamento');
     if (subAndamento) subAndamento.textContent = '';
 
-    // Média = Σ pontos finalizados no mês / nº de servidores operacionais
+    // ── MRC: Σ pontos finalizados todos servidores / Σ dias trabalhados todos servidores ──
     let totalPontosFinalizados = 0;
-    produtosOper
-        .filter(p => resolverStatus(p) === 'finalizado')
-        .forEach(p => {
-            (p.atividades || []).forEach(a => { totalPontosFinalizados += a.pontos || 0; });
-        });
+    let totalDiasTrabalhados   = 0;
 
-    const media = colaboradores.length > 0
-        ? (totalPontosFinalizados / colaboradores.length).toFixed(2)
-        : '0.00';
-
-    document.getElementById('mediaProdutividade').textContent = media;
-
-    const subMedia = document.getElementById('subMedia');
-    if (subMedia) subMedia.textContent = `${totalPontosFinalizados} pts ÷ ${colaboradores.length} servidores`;
-
-    // ── Duração Média Diária da Equipe ────────────────────────────────
-    // Σ médias diárias individuais ÷ quantidade de servidores
-    let somaMediasDiarias = 0;
-    let servidoresComDados = 0;
     colaboradores.forEach(col => {
         const prodsMes = filtrarProdutosMes(produtos.filter(p => p.servidorId === col.id), mesAno);
-        let ptsFin = 0;
         prodsMes.filter(p => resolverStatus(p) === 'finalizado').forEach(p => {
-            (p.atividades || []).forEach(a => { ptsFin += a.pontos || 0; });
+            (p.atividades || []).forEach(a => { totalPontosFinalizados += a.pontos || 0; });
         });
         const diasTrab = window.PresencaManager
             ? window.PresencaManager.getDiasTrabalhados(col.id, mesAno)
             : 0;
-        if (diasTrab > 0) {
-            somaMediasDiarias += ptsFin / diasTrab;
-            servidoresComDados++;
-        }
+        totalDiasTrabalhados += diasTrab;
     });
 
-    const duracaoMediaDiaria = servidoresComDados > 0
-        ? (somaMediasDiarias / servidoresComDados).toFixed(2)
-        : '—';
+    const mrcValor = totalDiasTrabalhados > 0
+        ? totalPontosFinalizados / totalDiasTrabalhados
+        : 0;
 
-    const elDuracao = document.getElementById('duracaoMediaDiaria');
+    const elDuracao    = document.getElementById('duracaoMediaDiaria');
     const elSubDuracao = document.getElementById('subDuracaoMedia');
-    if (elDuracao) elDuracao.textContent = duracaoMediaDiaria !== '—' ? duracaoMediaDiaria + ' pts/dia' : '—';
-    if (elSubDuracao) elSubDuracao.textContent = servidoresComDados > 0
-        ? `Σ médias ÷ ${servidoresComDados} servidor${servidoresComDados !== 1 ? 'es' : ''} com registro`
+    if (elDuracao) elDuracao.textContent = mrcValor > 0 ? mrcValor.toFixed(2) + ' pts/dia' : '—';
+    if (elSubDuracao) elSubDuracao.textContent = totalDiasTrabalhados > 0
+        ? `${totalPontosFinalizados.toFixed(0)} pts ÷ ${totalDiasTrabalhados} dias trabalhados`
         : 'Sem registros de presença';
 
     // ── Duração Média em Dias dos Produtos Finalizados ────────────────
@@ -172,21 +151,29 @@ function calcularEstatisticas() {
         ? `${somaDiasFinalizados} dias ÷ ${totalProdutosFinalizados} produto${totalProdutosFinalizados !== 1 ? 's' : ''} finalizado${totalProdutosFinalizados !== 1 ? 's' : ''}`
         : 'Sem produtos finalizados';
 
-    // ── Média por área ────────────────────────────────────────────────
+    // ── Média por área: Σ pontos / Σ dias trabalhados ────────────────
     ['Mecânica', 'Eletrônica'].forEach(area => {
-        const colabsArea  = colaboradores.filter(c => c.area === area);
-        const produtosArea = produtosOper.filter(p => {
-            const col = colabsArea.find(c => c.id === p.servidorId);
-            return col !== undefined && resolverStatus(p) === 'finalizado';
+        const colabsArea = colaboradores.filter(c => c.area === area);
+        let ptsArea  = 0;
+        let diasArea = 0;
+        colabsArea.forEach(col => {
+            const prodsMes = filtrarProdutosMes(produtos.filter(p => p.servidorId === col.id), mesAno);
+            prodsMes.filter(p => resolverStatus(p) === 'finalizado').forEach(p => {
+                (p.atividades || []).forEach(a => { ptsArea += a.pontos || 0; });
+            });
+            const diasTrab = window.PresencaManager
+                ? window.PresencaManager.getDiasTrabalhados(col.id, mesAno)
+                : 0;
+            diasArea += diasTrab;
         });
-        let ptsArea = 0;
-        produtosArea.forEach(p => (p.atividades || []).forEach(a => { ptsArea += a.pontos || 0; }));
-        const mediaArea = colabsArea.length > 0 ? (ptsArea / colabsArea.length).toFixed(2) : '0.00';
-        const key = area === 'Mecânica' ? 'Mecanica' : 'Eletronica';
-        const elVal = document.getElementById('mediaMedia' + key);
-        const elSub = document.getElementById('subMedia' + key);
-        if (elVal) elVal.textContent = mediaArea;
-        if (elSub) elSub.textContent = ptsArea + ' pts ÷ ' + colabsArea.length + ' servidores';
+        const mediaArea = diasArea > 0 ? (ptsArea / diasArea).toFixed(2) : '—';
+        const key    = area === 'Mecânica' ? 'Mecanica' : 'Eletronica';
+        const elVal  = document.getElementById('mediaMedia' + key);
+        const elSub  = document.getElementById('subMedia'  + key);
+        if (elVal) elVal.textContent = mediaArea !== '—' ? mediaArea + ' pts/dia' : '—';
+        if (elSub) elSub.textContent = diasArea > 0
+            ? `${ptsArea.toFixed(0)} pts ÷ ${diasArea} dias trabalhados`
+            : 'Sem registros de presença';
     });
 }
 
@@ -243,24 +230,36 @@ function renderTable(filtro = '') {
 
     const bench = 8; // benchmark pts/dia
 
-    // Média de pontos da equipe (todos os filtrados)
-    const totalPtsEquipe = filtrados.reduce((s, d) => s + d.pontosFinalizados, 0);
-    const mediaEquipe    = filtrados.length > 0 ? totalPtsEquipe / filtrados.length : 0;
+    // MRC recalculado aqui para uso na tabela (mesma lógica do calcularEstatisticas)
+    let mrcPts  = 0;
+    let mrcDias = 0;
+    colaboradores.forEach(col => {
+        const prodsMesCol = filtrarProdutosMes(produtos.filter(p => p.servidorId === col.id), mesAno);
+        prodsMesCol.filter(p => resolverStatus(p) === 'finalizado').forEach(p => {
+            (p.atividades || []).forEach(a => { mrcPts += a.pontos || 0; });
+        });
+        mrcDias += window.PresencaManager
+            ? window.PresencaManager.getDiasTrabalhados(col.id, mesAno)
+            : 0;
+    });
+    const mrc = mrcDias > 0 ? mrcPts / mrcDias : 0;
 
     tbody.innerHTML = filtrados.map(d => {
         const cor = d.mediaDiaria >= bench ? 'var(--success)'
                   : d.mediaDiaria >= bench * 0.8 ? 'var(--warning)'
                   : d.mediaDiaria > 0 ? 'var(--danger)' : 'var(--text-muted)';
 
+        // Desempenho Relativo = mediaDiaria do servidor / MRC
         let vsHtml;
-        if (mediaEquipe === 0 || d.pontosFinalizados === 0) {
+        if (mrc === 0 || d.mediaDiaria === 0) {
             vsHtml = '<span style="color:var(--text-muted);font-size:0.85rem;">—</span>';
         } else {
-            const diff  = (d.pontosFinalizados - mediaEquipe) / mediaEquipe * 100;
-            const sinal = diff >= 0 ? '+' : '';
-            const corVs = diff >= 0 ? 'var(--success)' : 'var(--danger)';
-            vsHtml = '<span style="font-weight:700;font-family:var(--code-font);font-size:0.9rem;color:' + corVs + ';">' + sinal + diff.toFixed(1) + '%</span>'
-                   + '<div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;">ref. equipe: ' + mediaEquipe.toFixed(1) + ' pts</div>';
+            const ratio  = d.mediaDiaria / mrc;
+            const pct    = (ratio - 1) * 100;
+            const sinal  = pct >= 0 ? '+' : '';
+            const corVs  = pct >= 0 ? 'var(--success)' : 'var(--danger)';
+            vsHtml = '<span style="font-weight:700;font-family:var(--code-font);font-size:0.9rem;color:' + corVs + ';">' + sinal + pct.toFixed(1) + '%</span>'
+                   + '<div style="font-size:0.68rem;color:var(--text-muted);margin-top:0.15rem;">MRC: ' + mrc.toFixed(2) + ' pts/dia</div>';
         }
 
         return `
