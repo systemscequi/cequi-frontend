@@ -145,22 +145,24 @@
             <div class="stat-card">
                 <div class="stat-header">
                     <div class="stat-label">Produtos do Mês</div>
-                    <span class="stat-change positive" id="changePontos" style="font-size:0.75rem;">-</span>
                 </div>
                 <div class="stat-value" id="pontuacaoTotal">-</div>
                 <div class="stat-meta">
-                    <span id="periodoAtual" style="font-size:0.75rem;">-</span>
+                    <span id="periodoAtual">-</span>
                 </div>
-                <div style="display:flex;gap:0.5rem;margin-top:0.6rem;">
-                    <div style="flex:1;display:flex;align-items:center;gap:0.35rem;background:var(--bg-dark);padding:0.3rem 0.5rem;border-radius:6px;">
-                        <span style="width:7px;height:7px;border-radius:50%;background:var(--warning);flex-shrink:0;"></span>
-                        <span style="font-size:0.70rem;color:var(--text-muted);">Andamento</span>
-                        <span style="font-size:0.80rem;font-weight:700;color:var(--warning);margin-left:auto;" id="qtdAndamento">-</span>
+                <div style="display:flex;gap:1rem;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);">
+                    <div style="display:flex;flex-direction:column;gap:0.15rem;">
+                        <span style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Andamento</span>
+                        <span style="font-size:1.1rem;font-weight:700;color:var(--warning);" id="qtdAndamento">-</span>
                     </div>
-                    <div style="flex:1;display:flex;align-items:center;gap:0.35rem;background:var(--bg-dark);padding:0.3rem 0.5rem;border-radius:6px;">
-                        <span style="width:7px;height:7px;border-radius:50%;background:var(--success);flex-shrink:0;"></span>
-                        <span style="font-size:0.70rem;color:var(--text-muted);">Finalizados</span>
-                        <span style="font-size:0.80rem;font-weight:700;color:var(--success);margin-left:auto;" id="qtdFinalizados">-</span>
+                    <div style="width:1px;background:var(--border);"></div>
+                    <div style="display:flex;flex-direction:column;gap:0.15rem;">
+                        <span style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Finalizados</span>
+                        <span style="font-size:1.1rem;font-weight:700;color:var(--success);" id="qtdFinalizados">-</span>
+                    </div>
+                    <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:0.15rem;">
+                        <span style="font-size:0.68rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;">Total</span>
+                        <span class="stat-change positive" id="changePontos" style="font-size:0.82rem;font-weight:700;">-</span>
                     </div>
                 </div>
             </div>
