@@ -424,7 +424,7 @@ function renderStep2() {
 
     const catBtns = Object.keys(CATEGORIAS).map(cat => {
         const actv = cat === categoriaAtual && !buscaAtividade;
-        return `<button class="category-btn cat-${cat} ${actv ? 'active' : ''}" onclick="mudarCategoria('${cat}')" title="${CATEGORIAS[cat].nome}">${CATEGORIAS[cat].icone} ${cat}</button>`;
+        return `<button class="category-btn cat-${cat} ${actv ? 'active' : ''}" onclick="mudarCategoria('${cat}')" title="${CATEGORIAS[cat].nome}">${CATEGORIAS[cat].icone ? CATEGORIAS[cat].icone + ' ' : ''}${CATEGORIAS[cat].nome}</button>`;
     }).join('');
 
     const complexButtons = (window.COMPLEXIDADES || [0.5, 1, 1.5]).map(v =>

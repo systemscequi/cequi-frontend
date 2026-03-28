@@ -229,7 +229,7 @@ function editarAtividadeLivre(produtoId, atividadeIdx) {
             </div>
             <div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">
                 <span style="font-size:0.75rem;background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid var(--warning);border-radius:4px;padding:0.2rem 0.6rem;font-weight:700;">LIVRE</span>
-                <span style="font-size:0.75rem;color:var(--text-muted);">${(window.CATEGORIAS?.[a.categoria]?.icone||'')} ${a.categoria}</span>
+                <span style="font-size:0.75rem;color:var(--text-muted);">${(window.CATEGORIAS?.[a.categoria]?.nome || a.categoria)}</span>
             </div>
             <div style="margin-bottom:1rem;">
                 <label style="font-size:0.78rem;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:0.4rem;">Descrição</label>

@@ -24,10 +24,11 @@ const MOCK_COLABORADORES = [
 // ========== CATEGORIAS ==========
 const CATEGORIAS = {
     DGS:   { nome: "Direção, Gestão e Supervisão",    icone: "📋" },
-    OPMN:  { nome: "Operação e Manutenção",           icone: "⚙️"  },
+    OPMN:  { nome: "Operação e Manutenção",           icone: "🔧" },
     PROJ:  { nome: "Projetos",                         icone: "📐" },
     ESPEC: { nome: "Especificações",                   icone: "📝" },
-    FISC:  { nome: "Fiscalização e Execução",          icone: "🔍" }
+    FISC:  { nome: "Fiscalização e Execução",          icone: "🔍" },
+    LIVRE: { nome: "Atividades Livres",                icone: ""   }
 };
 
 // Prefixo real dos códigos por categoria (usado em gerarProximoCodigo)

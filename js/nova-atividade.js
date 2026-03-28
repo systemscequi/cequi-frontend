@@ -165,7 +165,7 @@ function renderCategoriaBtns() {
     container.innerHTML = Object.entries(window.CATEGORIAS || {}).map(([key, cat]) => `
         <button class="category-btn cat-${key} ${key === categoriaAtualNov ? 'active' : ''}"
                 onclick="mudarCategoria('${key}')" title="${cat.nome}">
-            ${cat.icone} ${key}
+            ${cat.icone ? cat.icone + ' ' : ''}${cat.nome}
         </button>`).join('');
 }
 
@@ -394,7 +394,7 @@ function atualizarPainel() {
                     ${a.tipoLivre
                         ? `<span style="font-size:0.7rem;background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid var(--warning);border-radius:4px;padding:0.1rem 0.35rem;">LIVRE</span>`
                         : a.codigo}
-                    <span style="font-size:0.7rem;color:var(--text-muted);margin-left:0.35rem;">${(window.CATEGORIAS[a.categoria]?.icone || '')} ${a.categoria}</span>
+                    <span style="font-size:0.7rem;color:var(--text-muted);margin-left:0.35rem;">${(window.CATEGORIAS[a.categoria]?.nome || a.categoria)}</span>
                 </div>
                 <div class="painel-item-nome">${a.atividade}</div>
                 <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.15rem;">
@@ -446,7 +446,7 @@ function editarAtividadePainel(idx) {
         // Código (somente leitura)
         '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">' +
             '<span style="font-family:var(--code-font);font-size:0.85rem;color:var(--secondary-light);font-weight:700;background:var(--bg-dark);padding:0.2rem 0.6rem;border-radius:4px;">' + (ativ.tipoLivre ? 'LIVRE' : ativ.codigo) + '</span>' +
-            '<span style="font-size:0.75rem;color:var(--text-muted);">' + (window.CATEGORIAS?.[ativ.categoria]?.icone || '') + ' ' + ativ.categoria + '</span>' +
+            '<span style="font-size:0.75rem;color:var(--text-muted);">' + (window.CATEGORIAS?.[ativ.categoria]?.nome || ativ.categoria) + '</span>' +
         '</div>' +
         // Descrição — editável sempre
         '<div style="margin-bottom:1rem;">' +
