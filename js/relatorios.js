@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ─── Carregar lista de servidores ───────────────────────────────────────
 async function loadServidores() {
-    const r = await MockAPI.getColaboradores();
+    const r = await MockAPI.getTodosColaboradores();
     if (!r.success) return;
     colaboradores = r.data;
 

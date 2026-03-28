@@ -49,7 +49,7 @@ function popularSelectAno() {
 }
 
 async function loadServidores() {
-    const result = await MockAPI.getColaboradores();
+    const result = await MockAPI.getTodosColaboradores();
     if (result.success) {
         const select = document.getElementById('serverSelect');
         select.innerHTML = '<option value="">Selecione um servidor...</option>';

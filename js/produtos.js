@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadServidoresSelect() {
-    const result = await MockAPI.getColaboradores();
+    const result = await MockAPI.getTodosColaboradores();
     if (!result.success) return;
 
     const select = document.getElementById('serverSelect');
