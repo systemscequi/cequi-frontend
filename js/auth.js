@@ -174,7 +174,7 @@ class AuthManager {
         // Nome do usuário (primeiros 2 nomes)
         var nomeEl = document.createElement("span");
         nomeEl.className = "header-username";
-        nomeEl.textContent = session.nome;
+        nomeEl.textContent = session.nome ? session.nome.split(' ')[0] : session.nome;
         right.appendChild(nomeEl);
 
         // Separador visual
