@@ -591,7 +591,7 @@ function editarProduto(id) {
                     <input type="date" class="form-input" id="edit-inicio" value="${prod.dataInicio || ''}">
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Data Fim <span style="color:var(--text-muted);font-size:0.75rem;">(vazio = em andamento)</span></label>
+                    <label class="form-label">Data Fim <span title="Deixar em branco mantém o produto como Em Andamento" style="cursor:help;color:var(--text-muted);font-size:0.8rem;font-weight:700;border:1px solid var(--border);border-radius:50%;width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;margin-left:4px;">?</span></label>
                     <input type="date" class="form-input" id="edit-fim" value="${prod.dataFim || ''}">
                 </div>
             </div>
