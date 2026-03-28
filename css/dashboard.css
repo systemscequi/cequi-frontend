@@ -79,7 +79,7 @@
     color: var(--text-primary); font-family: var(--code-font);
     line-height: 1.1; margin-bottom: 0.3rem;
 }
-.stat-meta { font-size: 0.78rem; color: var(--text-muted); }
+.stat-meta { font-size: 0.78rem; color: var(--text-muted); display:flex; align-items:center; gap:0.4rem; flex-wrap:wrap; margin-top:0.25rem; }
 .stat-change {
     display: inline-flex; align-items: center; gap: 0.2rem;
     padding: 0.15rem 0.45rem; border-radius: 4px;
