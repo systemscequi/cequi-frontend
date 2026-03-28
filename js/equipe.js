@@ -63,9 +63,9 @@ function filtrarProdutosMes(lista, mesAno) {
 // ─── Carrega dados ────────────────────────────────────────────────────
 async function loadEquipeData() {
     try {
-        const colabResult = await MockAPI.getColaboradores();
+        const colabResult = await MockAPI.getTodosColaboradores();
         if (colabResult.success) {
-            colaboradores = colabResult.data.filter(c => c.area !== 'CEQUI');
+            colaboradores = colabResult.data.filter(c => c.area !== 'CEQUI' && c.role !== 'admin');
         }
         const prodResult = await MockAPI.getProdutos();
         if (prodResult.success) {

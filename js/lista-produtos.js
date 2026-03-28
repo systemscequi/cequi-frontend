@@ -49,16 +49,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadServidoresSelect() {
-    const result = await MockAPI.getColaboradores();
+    const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
+    const isAdmin = session && session.role === 'admin';
+
+    const result = isAdmin
+        ? await MockAPI.getTodosColaboradores()
+        : await MockAPI.getColaboradores();
     if (!result.success) return;
 
     const select = document.getElementById('serverSelect');
     const group  = document.getElementById('serverGroup');
     if (!select) return;
-
-    // Usuário comum não vê o seletor
-    const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
-    const isAdmin = session && session.role === 'admin';
 
     const pageTitle = document.getElementById('pageTitle');
     if (pageTitle) {

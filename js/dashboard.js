@@ -99,13 +99,21 @@ function filtrarProdutosPorMes(todosProdutos, mesAno) {
 
 async function loadServidores() {
     try {
-        const result = await MockAPI.getColaboradores();
-        
+        const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
+        const isAdmin = session && session.role === 'admin';
+        // Admin usa /todos para ver todos os servidores incluindo novos
+        const result = isAdmin
+            ? await MockAPI.getTodosColaboradores()
+            : await MockAPI.getColaboradores();
+
         if (result.success) {
             const select = document.getElementById('serverSelect');
             select.innerHTML = '<option value="">Selecione um servidor...</option>';
-            
-            result.data.forEach(servidor => {
+            // Admin vê todos exceto si mesmo na listagem; user vê só role=user
+            const lista = isAdmin
+                ? result.data.filter(s => s.area !== 'CEQUI' || s.role !== 'admin')
+                : result.data;
+            lista.forEach(servidor => {
                 const option = document.createElement('option');
                 option.value = servidor.id;
                 option.textContent = `${servidor.nome} (Ponto ${servidor.ponto})`;
