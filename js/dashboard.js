@@ -347,16 +347,17 @@ async function updateStats() {
 
         const elMedia = document.getElementById('vsEquipeMedia');
         const elValor = document.getElementById('vsEquipeValor');
-        // Mostrar MRC x 0,8 diretamente em pts/dia
         if (elMedia) elMedia.textContent = mri.toFixed(2);
         if (elValor) {
-            elValor.textContent = mri > 0 ? mri.toFixed(2) + ' pts/dia' : '—';
+            // Só o número no valor principal, "pts/dia" fica na meta abaixo
+            elValor.textContent = mri > 0 ? mri.toFixed(2) : '—';
             elValor.style.color = '';
         }
     } catch(e) { console.warn('MRI erro:', e); }
 
+    // Produtos do Mês: mostrar só o número
     document.getElementById('changePontos').textContent = produtos.length > 0
-        ? `${produtos.length} produto${produtos.length !== 1 ? 's' : ''}` : '0 produtos';
+        ? produtos.length : '0';
 
 }
 
