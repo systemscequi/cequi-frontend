@@ -348,7 +348,7 @@ async function updateStats() {
     } catch(e) { console.warn('MRI erro:', e); }
 
     document.getElementById('changePontos').textContent = produtos.length > 0
-        ? `${produtos.length} produto${produtos.length !== 1 ? 's' : ''}` : '-';
+        ? `${produtos.length} produto${produtos.length !== 1 ? 's' : ''}` : '0 produtos';
 
 }
 
