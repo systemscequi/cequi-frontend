@@ -9,7 +9,7 @@ let servidorAtualNov  = null;
 let produtoAtualNov   = null;
 let atividadeSel      = null;   // atividade padrão selecionada
 let complexidadeSel   = null;
-let categoriaAtualNov = 'DGSPI';
+let categoriaAtualNov = 'DGS';
 let modoAtividade     = null;   // 'livre' | 'padrao' | null
 let atividadesCache   = {};     // cache de atividades padrão (do backend ou mock)
 

@@ -5,7 +5,7 @@
 
 let produto = { codigo: '', nome: '', dataInicio: '', dataFim: '', observacoes: '', entregas: '', atividades: [] };
 let currentStep = 1;
-let categoriaAtual = 'DGSPI';
+let categoriaAtual = 'DGS';
 let atividadeSelecionada = null;
 let complexidadeSelecionada = null;
 let buscaAtividade = '';
@@ -73,7 +73,7 @@ async function loadServidoresSelect() {
 
 function aplicarServidor(server, _all) {
     const cats = (window.AREA_CATEGORIAS || {})[server.area] || Object.keys(window.CATEGORIAS || {});
-    categoriaAtual = cats[0] || 'DGSPI';
+    categoriaAtual = cats[0] || 'DGS';
 }
 
 function renderStep1() {

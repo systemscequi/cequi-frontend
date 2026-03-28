@@ -1,26 +1,25 @@
 let atividades = {};
-let categoriaAtual = 'DGSPI';
+let categoriaAtual = 'DGS';
 let editandoId = null;
 
 const categorias = {
-    DGSPI: 'Direção, gestão, supervisão, planejamento e informação',
-    EAC: 'Engenharia de ar condicionado',
-    EPCI: 'Engenharia de proteção contra incêndio',
-    EEME: 'Engenharia de equipamentos mecânicos e eletrônicos',
-    ECA: 'Engenharia de controle e automação',
-    ETP: 'Engenharia de transportes prediais'
+    DGS:   'Direção, Gestão e Supervisão',
+    OPMN:  'Operação e Manutenção',
+    PROJ:  'Projetos',
+    ESPEC: 'Especificações',
+    FISC:  'Fiscalização e Execução'
 };
 
 // ── Gera o próximo código automaticamente ────────────────────────────────
 function gerarProximoCodigo(categoria) {
     const lista = atividades[categoria] || [];
-    // Pega todos os números usados nesta categoria
+    const prefixo = (window.CATEGORIA_PREFIX && window.CATEGORIA_PREFIX[categoria]) || categoria;
     const nums = lista.map(a => {
         const match = a.codigo.match(/(\d+)$/);
         return match ? parseInt(match[1]) : 0;
     });
     const proximo = nums.length > 0 ? Math.max(...nums) + 1 : 1;
-    return categoria + String(proximo).padStart(2, '0');
+    return prefixo + String(proximo).padStart(2, '0');
 }
 
 function atualizarPreviewCodigo() {
