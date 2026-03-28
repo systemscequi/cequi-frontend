@@ -70,10 +70,12 @@ header {
 /* Nav central — ocupa o espaço restante */
 .header-nav {
     display: flex;
-    gap: 0.25rem;
+    gap: 0.2rem;
     align-items: center;
-    flex: 1;                /* cresce para preencher */
+    flex: 1;
     justify-content: center;
+    overflow: hidden;
+    min-width: 0;
 }
 
 /* Zona direita — tamanho FIXO para não causar reflow */
@@ -82,7 +84,7 @@ header {
     align-items: center;
     gap: 0.5rem;
     flex-shrink: 0;
-    min-width: 240px;       /* espaço reservado sempre presente */
+    min-width: 180px;
     justify-content: flex-end;
 }
 
@@ -105,15 +107,15 @@ header {
 }
 
 .nav-btn {
-    padding: 0.45rem 1rem;
+    padding: 0.4rem 0.7rem;
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
     font-family: var(--body-font);
-    font-size: 0.78rem; font-weight: 600;
+    font-size: 0.72rem; font-weight: 600;
     cursor: pointer; border-radius: var(--radius-sm);
     transition: background 0.15s, color 0.15s, border-color 0.15s;
-    text-transform: uppercase; letter-spacing: 0.75px;
+    text-transform: uppercase; letter-spacing: 0.5px;
     text-decoration: none; display: inline-flex; align-items: center;
     white-space: nowrap;
 }
@@ -468,17 +470,17 @@ tbody tr:hover { background: var(--bg-dark); }
 
 /* ── 1280px: laptops comuns / zoom 110% ── */
 @media (max-width: 1280px) {
-    .nav-btn { padding: 0.38rem 0.6rem; font-size: 0.72rem; }
-    .header-username { max-width: 110px; }
+    .nav-btn { padding: 0.35rem 0.5rem; font-size: 0.68rem; }
+    .header-username { max-width: 100px; }
     .container { padding: 1.5rem; }
 }
 
 /* ── 1180px: zoom 125% ou nav começando a espremer ── */
 @media (max-width: 1180px) {
-    .header-nav { gap: 0.1rem; }
-    .nav-btn { padding: 0.35rem 0.45rem; font-size: 0.68rem; letter-spacing: 0.3px; }
-    .header-right { min-width: 140px; gap: 0.3rem; }
-    .header-username { max-width: 80px; }
+    .header-nav { gap: 0.05rem; }
+    .nav-btn { padding: 0.3rem 0.4rem; font-size: 0.65rem; letter-spacing: 0.2px; }
+    .header-right { min-width: 120px; gap: 0.25rem; }
+    .header-username { max-width: 70px; }
 }
 
 /* ── 1060px: nav muito espremida → hamburger ── */
