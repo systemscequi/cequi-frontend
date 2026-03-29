@@ -95,6 +95,41 @@ async function loadServidores(paramSrvId = null, paramProdId = null) {
     });
 }
 
+async function loadProdutosServidor(servidorId, paramProdId = null) {
+    const select = document.getElementById('produtoSelect');
+    if (!select) return;
+
+    const result = await MockAPI.getProdutos(servidorId);
+    if (!result || !result.success) return;
+
+    // Filtrar só produtos em andamento
+    const emAndamento = result.data.filter(p => resolverStatus(p) === 'em-andamento');
+
+    select.innerHTML = emAndamento.length > 0
+        ? '<option value="">Selecione um produto...</option>' +
+          emAndamento.map(p => `<option value="${p.id}">${p.codigo} — ${p.nome}</option>`).join('')
+        : '<option value="">Nenhum produto em andamento</option>';
+
+    // Pré-selecionar se veio por URL
+    if (paramProdId) {
+        const opt = [...select.options].find(o => o.value == paramProdId);
+        if (opt) {
+            select.value = paramProdId;
+            select.dispatchEvent(new Event('change'));
+        }
+    }
+
+    select.onchange = async function () {
+        const prodId = parseInt(this.value);
+        if (!prodId) { atualizarPainel(); return; }
+        const prod = result.data.find(p => p.id === prodId);
+        if (prod) {
+            window._produtoAtual = prod;
+            window._atividadesAtuais = (prod.atividades || []).map(a => ({...a}));
+            atualizarPainel();
+        }
+    };
+}
 
 function renderCategoriaBtns() {
     const container = document.getElementById('categoriaBtns');
@@ -473,4 +508,3 @@ async function confirmarEdicaoAtiv(idx) {
     atualizarPainel();
     Notify.success('Atividade atualizada!');
 }
-
