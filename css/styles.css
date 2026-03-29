@@ -107,15 +107,15 @@ header {
 }
 
 .nav-btn {
-    padding: 0.4rem 0.7rem;
+    padding: 0.42rem 0.85rem;
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
     font-family: var(--body-font);
-    font-size: 0.72rem; font-weight: 600;
+    font-size: 0.75rem; font-weight: 600;
     cursor: pointer; border-radius: var(--radius-sm);
     transition: background 0.15s, color 0.15s, border-color 0.15s;
-    text-transform: uppercase; letter-spacing: 0.5px;
+    text-transform: uppercase; letter-spacing: 0.6px;
     text-decoration: none; display: inline-flex; align-items: center;
     white-space: nowrap;
 }
@@ -470,15 +470,15 @@ tbody tr:hover { background: var(--bg-dark); }
 
 /* ── 1280px: laptops comuns / zoom 110% ── */
 @media (max-width: 1280px) {
-    .nav-btn { padding: 0.35rem 0.5rem; font-size: 0.68rem; }
-    .header-username { max-width: 100px; }
+    .nav-btn { padding: 0.38rem 0.65rem; font-size: 0.72rem; }
+    .header-username { max-width: 110px; }
     .container { padding: 1.5rem; }
 }
 
 /* ── 1180px: zoom 125% ou nav começando a espremer ── */
 @media (max-width: 1180px) {
     .header-nav { gap: 0.05rem; }
-    .nav-btn { padding: 0.3rem 0.4rem; font-size: 0.65rem; letter-spacing: 0.2px; }
+    .nav-btn { padding: 0.32rem 0.5rem; font-size: 0.68rem; letter-spacing: 0.3px; }
     .header-right { min-width: 120px; gap: 0.25rem; }
     .header-username { max-width: 70px; }
 }
