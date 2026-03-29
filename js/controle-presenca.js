@@ -20,18 +20,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     popularSelectAno();
     sincronizarSelects();
 
-    // Ocultar seletor de servidor para usuário comum
-    const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
-    const isAdmin = session && session.role === 'admin';
-    if (!isAdmin) {
-        const serverGroup = document.getElementById('serverGroup');
-        if (serverGroup) serverGroup.style.display = 'none';
-    }
-
-    await loadServidores();
     await loadFeriados();
-    await loadPresencaData();
-    renderCalendar();
+    await loadServidores(); // carrega servidor, presença e renderiza calendário internamente
 });
 
 function popularSelectAno() {
