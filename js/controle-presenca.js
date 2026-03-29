@@ -69,11 +69,16 @@ async function loadServidores() {
         if (!isAdmin && session) {
             // Usuário comum: ocultar seletor e usar o próprio servidor
             if (group) group.style.display = 'none';
-            servidorFinal = result.data.find(s => s.id === session.userId);
+            const uid = parseInt(session.userId);
+            servidorFinal = result.data.find(s => parseInt(s.id) === uid);
+            // Fallback: se não encontrar pelo id, tenta pelo ponto
+            if (!servidorFinal && session.ponto) {
+                servidorFinal = result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
+            }
         } else {
             // Admin: mostrar seletor
             const saved = CurrentServer.get();
-            servidorFinal = (saved && result.data.find(s => s.id === saved.id)) || result.data[0];
+            servidorFinal = (saved && result.data.find(s => parseInt(s.id) === parseInt(saved.id))) || result.data[0];
         }
 
         if (servidorFinal) {
