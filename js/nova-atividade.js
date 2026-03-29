@@ -110,24 +110,43 @@ async function loadProdutosServidor(servidorId, paramProdId = null) {
           emAndamento.map(p => `<option value="${p.id}">${p.codigo} — ${p.nome}</option>`).join('')
         : '<option value="">Nenhum produto em andamento</option>';
 
+    const selecionarProduto = (prodId) => {
+        const prod = result.data.find(p => p.id === parseInt(prodId));
+        if (prod) {
+            produtoAtualNov = prod;
+            if (!produtoAtualNov.atividades) produtoAtualNov.atividades = [];
+            atualizarPainel();
+            // Mostrar form e esconder mensagem inicial
+            const semProduto = document.getElementById('semProdutoMsg');
+            const formAtiv   = document.getElementById('formAtividade');
+            if (semProduto) semProduto.style.display = 'none';
+            if (formAtiv)   formAtiv.style.display   = '';
+        } else {
+            produtoAtualNov = null;
+            const semProduto = document.getElementById('semProdutoMsg');
+            const formAtiv   = document.getElementById('formAtividade');
+            if (semProduto) semProduto.style.display = '';
+            if (formAtiv)   formAtiv.style.display   = 'none';
+            atualizarPainel();
+        }
+    };
+
     // Pré-selecionar se veio por URL
     if (paramProdId) {
         const opt = [...select.options].find(o => o.value == paramProdId);
         if (opt) {
             select.value = paramProdId;
-            select.dispatchEvent(new Event('change'));
+            selecionarProduto(paramProdId);
         }
     }
 
-    select.onchange = async function () {
-        const prodId = parseInt(this.value);
-        if (!prodId) { atualizarPainel(); return; }
-        const prod = result.data.find(p => p.id === prodId);
-        if (prod) {
-            window._produtoAtual = prod;
-            window._atividadesAtuais = (prod.atividades || []).map(a => ({...a}));
+    select.onchange = function () {
+        if (!this.value) {
+            produtoAtualNov = null;
             atualizarPainel();
+            return;
         }
+        selecionarProduto(this.value);
     };
 }
 
