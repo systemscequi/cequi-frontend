@@ -52,8 +52,10 @@ async function loadServidores() {
     const result = await MockAPI.getTodosColaboradores();
     if (result.success) {
         const select = document.getElementById('serverSelect');
-        select.innerHTML = '<option value="">Selecione um servidor...</option>';
+        const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
+        const isAdmin = session && session.role === 'admin';
 
+        select.innerHTML = '<option value="">Selecione um servidor...</option>';
         result.data.forEach(servidor => {
             const option = document.createElement('option');
             option.value = servidor.id;
@@ -61,9 +63,21 @@ async function loadServidores() {
             select.appendChild(option);
         });
 
-        const saved = CurrentServer.get();
-        const servidorPreSel = saved && result.data.find(s => s.id === saved.id);
-        const servidorFinal  = servidorPreSel || result.data[0];
+        // Usuário comum: forçar o próprio servidor automaticamente
+        let servidorFinal;
+        if (!isAdmin && session) {
+            servidorFinal = result.data.find(s => s.id === session.userId);
+            if (select) {
+                select.value = session.userId;
+                select.disabled = true;
+                select.style.opacity = '0.7';
+                select.style.cursor = 'not-allowed';
+            }
+        } else {
+            const saved = CurrentServer.get();
+            servidorFinal = (saved && result.data.find(s => s.id === saved.id)) || result.data[0];
+        }
+
         if (servidorFinal) {
             select.value = servidorFinal.id;
             CurrentServer.set(servidorFinal);

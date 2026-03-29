@@ -47,11 +47,10 @@ async function loadServidores(paramSrvId = null, paramProdId = null) {
     if (!isAdmin) {
         if (group) group.style.display = 'none';
         let saved = CurrentServer.get();
-        // Fallback: recuperar servidor do próprio usuário se CurrentServer estiver vazio
+        // Fallback: recuperar servidor do banco pelo userId da sessão
         if (!saved && session) {
-            const colabs = window.MOCK_COLABORADORES || [];
-            const proprio = colabs.find(s => s.id === session.userId);
-            if (proprio) { CurrentServer.set(proprio); saved = proprio; }
+            saved = result.data.find(s => s.id === session.userId);
+            if (saved) CurrentServer.set(saved);
         }
         if (saved) {
             servidorAtualNov = saved.id;
