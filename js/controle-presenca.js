@@ -70,13 +70,17 @@ async function loadServidores() {
             // Usuário comum: ocultar seletor e usar o próprio servidor
             if (group) group.style.display = 'none';
             const uid = parseInt(session.userId);
-            servidorFinal = result.data.find(s => parseInt(s.id) === uid);
-            // Fallback: se não encontrar pelo id, tenta pelo ponto
-            if (!servidorFinal && session.ponto) {
-                servidorFinal = result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
+            // Tentar por id, depois por ponto, depois CurrentServer
+            servidorFinal = result.data.find(s => parseInt(s.id) === uid)
+                         || result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
+            // Último fallback: CurrentServer já populado pelo auth.js
+            if (!servidorFinal) {
+                const saved = CurrentServer.get();
+                if (saved) servidorFinal = result.data.find(s => parseInt(s.id) === parseInt(saved.id)) || saved;
             }
         } else {
             // Admin: mostrar seletor
+            if (group) group.style.display = '';
             const saved = CurrentServer.get();
             servidorFinal = (saved && result.data.find(s => parseInt(s.id) === parseInt(saved.id))) || result.data[0];
         }

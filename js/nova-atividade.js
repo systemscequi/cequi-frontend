@@ -46,18 +46,25 @@ async function loadServidores(paramSrvId = null, paramProdId = null) {
 
     if (!isAdmin) {
         if (group) group.style.display = 'none';
+        const uid = session ? parseInt(session.userId) : null;
+        // Tentar CurrentServer primeiro, depois buscar no resultado pelo id ou ponto
         let saved = CurrentServer.get();
-        // Fallback: recuperar servidor do banco pelo userId da sessão
-        if (!saved && session) {
-            saved = result.data.find(s => s.id === session.userId);
+        if (!saved && uid) {
+            saved = result.data.find(s => parseInt(s.id) === uid);
+            if (!saved && session?.ponto) {
+                saved = result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
+            }
             if (saved) CurrentServer.set(saved);
         }
         if (saved) {
-            servidorAtualNov = saved.id;
+            servidorAtualNov = parseInt(saved.id);
             await loadProdutosServidor(saved.id, paramProdId);
         }
         return;
     }
+
+    // Admin: mostrar seletor
+    if (group) group.style.display = '';
 
     select.innerHTML = '<option value="">Selecione um servidor...</option>';
     result.data.forEach(s => {
