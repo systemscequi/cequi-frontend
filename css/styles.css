@@ -105,15 +105,15 @@ header {
 }
 
 .nav-btn {
-    padding: 0.45rem 1rem;
+    padding: 0.42rem 0.7rem;
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-muted);
     font-family: var(--body-font);
-    font-size: 0.78rem; font-weight: 600;
+    font-size: 0.74rem; font-weight: 600;
     cursor: pointer; border-radius: var(--radius-sm);
     transition: background 0.15s, color 0.15s, border-color 0.15s;
-    text-transform: uppercase; letter-spacing: 0.75px;
+    text-transform: uppercase; letter-spacing: 0.55px;
     text-decoration: none; display: inline-flex; align-items: center;
     white-space: nowrap;
 }
