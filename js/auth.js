@@ -125,18 +125,31 @@ class AuthManager {
         }
 
         // Garantir que CurrentServer está setado com os dados do usuário logado
-        // (evita que lista-produtos e cadastro-produtos quebrem se o user navegar diretamente)
         if (typeof CurrentServer !== "undefined") {
             var cs = CurrentServer.get();
             var sessionUser = session.userId;
             // Para user comum: sempre forçar CurrentServer para o próprio servidor
             if (session.role !== "admin" || !cs) {
-                var colabs = window.MOCK_COLABORADORES || [];
+                // Usar cache do banco (DataStore) primeiro, depois MOCK_COLABORADORES
+                var colabs = (typeof DataStore !== "undefined" ? DataStore.getColaboradores() : null)
+                          || window.MOCK_COLABORADORES || [];
+                var found = false;
                 for (var i = 0; i < colabs.length; i++) {
-                    if (colabs[i].id === sessionUser) {
+                    if (parseInt(colabs[i].id) === parseInt(sessionUser)) {
                         CurrentServer.set(colabs[i]);
+                        found = true;
                         break;
                     }
+                }
+                // Se ainda não encontrou, criar objeto básico da sessão
+                if (!found && session.role !== "admin") {
+                    CurrentServer.set({
+                        id:    session.userId,
+                        ponto: session.ponto,
+                        nome:  session.nome,
+                        area:  session.area,
+                        role:  session.role
+                    });
                 }
             }
         }
@@ -174,7 +187,7 @@ class AuthManager {
         // Nome do usuário (primeiros 2 nomes)
         var nomeEl = document.createElement("span");
         nomeEl.className = "header-username";
-        nomeEl.textContent = session.nome ? session.nome.split(' ')[0] : session.nome;
+        nomeEl.textContent = session.nome;
         right.appendChild(nomeEl);
 
         // Separador visual
