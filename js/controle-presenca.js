@@ -51,9 +51,10 @@ function popularSelectAno() {
 async function loadServidores() {
     const result = await MockAPI.getTodosColaboradores();
     if (result.success) {
-        const select = document.getElementById('serverSelect');
-        const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
-        const isAdmin = session && session.role === 'admin';
+        const select   = document.getElementById('serverSelect');
+        const group    = document.getElementById('serverGroup');
+        const session  = typeof Auth !== 'undefined' ? Auth.getSession() : null;
+        const isAdmin  = session && session.role === 'admin';
 
         select.innerHTML = '<option value="">Selecione um servidor...</option>';
         result.data.forEach(servidor => {
@@ -63,17 +64,14 @@ async function loadServidores() {
             select.appendChild(option);
         });
 
-        // Usuário comum: forçar o próprio servidor automaticamente
         let servidorFinal;
+
         if (!isAdmin && session) {
+            // Usuário comum: ocultar seletor e usar o próprio servidor
+            if (group) group.style.display = 'none';
             servidorFinal = result.data.find(s => s.id === session.userId);
-            if (select) {
-                select.value = session.userId;
-                select.disabled = true;
-                select.style.opacity = '0.7';
-                select.style.cursor = 'not-allowed';
-            }
         } else {
+            // Admin: mostrar seletor
             const saved = CurrentServer.get();
             servidorFinal = (saved && result.data.find(s => s.id === saved.id)) || result.data[0];
         }
