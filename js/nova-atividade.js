@@ -36,35 +36,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Servidores ────────────────────────────────────────────────────────────────
 async function loadServidores(paramSrvId = null, paramProdId = null) {
-    const result = await MockAPI.getTodosColaboradores();
-    if (!result.success) return;
-
-    const select  = document.getElementById('serverSelect');
-    const group   = document.getElementById('serverGroup');
     const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
     const isAdmin = session && session.role === 'admin';
+    const group   = document.getElementById('serverGroup');
+    const select  = document.getElementById('serverSelect');
 
-    if (!isAdmin) {
+    if (!isAdmin && session) {
+        // Usuário comum: ocultar seletor, usar sessão
         if (group) group.style.display = 'none';
-        const uid = session ? parseInt(session.userId) : null;
-        // Tentar CurrentServer primeiro, depois buscar no resultado pelo id ou ponto
-        let saved = CurrentServer.get();
-        if (!saved && uid) {
-            saved = result.data.find(s => parseInt(s.id) === uid);
-            if (!saved && session?.ponto) {
-                saved = result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
-            }
-            if (saved) CurrentServer.set(saved);
+
+        const result = await MockAPI.getColaboradores();
+        let servidor = null;
+        if (result && result.success) {
+            const uid = parseInt(session.userId);
+            servidor = result.data.find(s => parseInt(s.id) === uid)
+                    || result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
         }
-        if (saved) {
-            servidorAtualNov = parseInt(saved.id);
-            await loadProdutosServidor(saved.id, paramProdId);
+        if (!servidor) {
+            servidor = { id: session.userId, ponto: session.ponto, nome: session.nome, area: session.area };
         }
+        CurrentServer.set(servidor);
+        servidorAtualNov = parseInt(servidor.id);
+        await loadProdutosServidor(servidor.id, paramProdId);
         return;
     }
 
     // Admin: mostrar seletor
     if (group) group.style.display = '';
+    const result = await MockAPI.getTodosColaboradores();
+    if (!result || !result.success) return;
 
     select.innerHTML = '<option value="">Selecione um servidor...</option>';
     result.data.forEach(s => {
@@ -74,97 +74,28 @@ async function loadServidores(paramSrvId = null, paramProdId = null) {
         select.appendChild(opt);
     });
 
-    // Prioridade: paramSrvId da URL > servidor salvo > primeiro da lista
     const alvoId = paramSrvId || (CurrentServer.get()?.id) || null;
-    const servidorAlvo = alvoId && result.data.find(s => s.id === alvoId);
+    const servidorAlvo = alvoId && result.data.find(s => parseInt(s.id) === parseInt(alvoId));
     const servidorFinal = servidorAlvo || result.data[0];
 
     if (servidorFinal) {
         select.value = servidorFinal.id;
         CurrentServer.set(servidorFinal);
-        servidorAtualNov = servidorFinal.id;
+        servidorAtualNov = parseInt(servidorFinal.id);
         await loadProdutosServidor(servidorFinal.id, paramProdId);
     }
 
     select.addEventListener('change', async function () {
-        const servidor = result.data.find(s => s.id === parseInt(this.value));
-        if (servidor) {
-            CurrentServer.set(servidor);
-            servidorAtualNov = servidor.id;
-            produtoAtualNov  = null;
-            resetFormulario();
-            await loadProdutosServidor(servidor.id);
+        const srv = result.data.find(s => s.id === parseInt(this.value));
+        if (srv) {
+            CurrentServer.set(srv);
+            servidorAtualNov = parseInt(srv.id);
+            await loadProdutosServidor(srv.id, null);
         }
     });
 }
 
-// ── Produtos em andamento ─────────────────────────────────────────────────────
-async function loadProdutosServidor(servidorId, paramProdId = null) {
-    const result = await MockAPI.getProdutos(servidorId);
-    const select = document.getElementById('produtoSelect');
 
-    const emAndamento = result.success
-        ? result.data.filter(p => p.status === 'em-andamento' || !p.dataFim)
-        : [];
-
-    if (emAndamento.length === 0) {
-        select.innerHTML = '<option value="">Nenhum produto em andamento</option>';
-        resetFormulario();
-        return;
-    }
-
-    select.innerHTML = '<option value="">Selecione um produto...</option>';
-    emAndamento.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = `${p.codigo} — ${p.nome}`;
-        select.appendChild(opt);
-    });
-
-    // Pré-selecionar produto se veio via URL
-    if (paramProdId) {
-        const prodAlvo = emAndamento.find(p => p.id === paramProdId);
-        if (prodAlvo) {
-            select.value = prodAlvo.id;
-            selecionarProduto();
-        }
-    }
-}
-
-function selecionarProduto() {
-    const id = parseInt(document.getElementById('produtoSelect').value);
-    if (!id) { produtoAtualNov = null; resetFormulario(); return; }
-
-    const todos = DataStore.getProdutos().filter(p => p.servidorId === servidorAtualNov);
-    produtoAtualNov = todos.find(p => p.id === id) || null;
-
-    if (produtoAtualNov) { mostrarFormulario(); atualizarPainel(); }
-}
-
-// ── Formulário ────────────────────────────────────────────────────────────────
-function mostrarFormulario() {
-    document.getElementById('semProdutoMsg').style.display = 'none';
-    document.getElementById('formAtividade').style.display = 'block';
-    atualizarSelectAtividades();
-}
-
-function resetFormulario() {
-    document.getElementById('semProdutoMsg').style.display = 'flex';
-    document.getElementById('formAtividade').style.display = 'none';
-    document.getElementById('atividadeInfo').style.display = 'none';
-    document.getElementById('pontosPreview').classList.remove('visible');
-    if (document.getElementById('descricaoLivre'))
-        document.getElementById('descricaoLivre').value = '';
-    if (document.getElementById('obsAtividade'))
-        document.getElementById('obsAtividade').value = '';
-    atividadeSel    = null;
-    complexidadeSel = null;
-    modoAtividade   = null;
-    aplicarExclusividade();
-    atualizarPainel();
-}
-
-// ── Categorias ────────────────────────────────────────────────────────────────
 function renderCategoriaBtns() {
     const container = document.getElementById('categoriaBtns');
     if (!container) return;

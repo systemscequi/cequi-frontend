@@ -28,15 +28,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function loadServidoresSelect() {
-    const result = await MockAPI.getTodosColaboradores();
-    if (!result.success) return;
-
-    const select  = document.getElementById('serverSelect');
-    const group   = document.getElementById('serverGroup');
-    if (!select) return;
-
     const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
     const isAdmin = session && session.role === 'admin';
+    const group   = document.getElementById('serverGroup');
+    const select  = document.getElementById('serverSelect');
+    if (!select) return;
+
+    if (!isAdmin && session) {
+        // Usuário comum: ocultar seletor, usar sessão
+        if (group) group.style.display = 'none';
+
+        const result = await MockAPI.getColaboradores();
+        let servidor = null;
+        if (result && result.success) {
+            const uid = parseInt(session.userId);
+            servidor = result.data.find(s => parseInt(s.id) === uid)
+                    || result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
+        }
+        if (!servidor) {
+            servidor = { id: session.userId, ponto: session.ponto, nome: session.nome, area: session.area };
+        }
+        CurrentServer.set(servidor);
+        aplicarServidor(servidor, [servidor]);
+        return;
+    }
+
+    // Admin: mostrar seletor com todos
+    if (group) group.style.display = '';
+    const result = await MockAPI.getTodosColaboradores();
+    if (!result || !result.success) return;
 
     select.innerHTML = '<option value="">Selecione um servidor...</option>';
     result.data.forEach(s => {
@@ -46,21 +66,6 @@ async function loadServidoresSelect() {
         select.appendChild(opt);
     });
 
-    if (!isAdmin && session) {
-        // Usuário comum: ocultar seletor e forçar o próprio servidor
-        if (group) group.style.display = 'none';
-        const uid = parseInt(session.userId);
-        const proprio = result.data.find(s => parseInt(s.id) === uid)
-                     || result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
-        if (proprio) {
-            select.value = proprio.id;
-            CurrentServer.set(proprio);
-            aplicarServidor(proprio, result.data);
-        }
-        return;
-    }
-
-    // Admin: pré-selecionar servidor salvo ou primeiro da lista
     const saved = CurrentServer.get();
     const servidorPreSel = saved && result.data.find(s => parseInt(s.id) === parseInt(saved.id));
     const servidorFinal  = servidorPreSel || result.data[0];

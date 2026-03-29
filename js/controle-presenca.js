@@ -39,62 +39,71 @@ function popularSelectAno() {
 }
 
 async function loadServidores() {
-    const result = await MockAPI.getTodosColaboradores();
-    if (result.success) {
-        const select   = document.getElementById('serverSelect');
-        const group    = document.getElementById('serverGroup');
-        const session  = typeof Auth !== 'undefined' ? Auth.getSession() : null;
-        const isAdmin  = session && session.role === 'admin';
+    const session  = typeof Auth !== 'undefined' ? Auth.getSession() : null;
+    const isAdmin  = session && session.role === 'admin';
+    const group    = document.getElementById('serverGroup');
+    const select   = document.getElementById('serverSelect');
 
-        select.innerHTML = '<option value="">Selecione um servidor...</option>';
-        result.data.forEach(servidor => {
-            const option = document.createElement('option');
-            option.value = servidor.id;
-            option.textContent = `${servidor.nome} (Ponto ${servidor.ponto})`;
-            select.appendChild(option);
-        });
+    if (!isAdmin && session) {
+        // Usuário comum: ocultar seletor, usar sessão para identificar servidor
+        if (group) group.style.display = 'none';
 
-        let servidorFinal;
-
-        if (!isAdmin && session) {
-            // Usuário comum: ocultar seletor e usar o próprio servidor
-            if (group) group.style.display = 'none';
+        // Buscar apenas os colaboradores permitidos (role=user)
+        const result = await MockAPI.getColaboradores();
+        if (result && result.success) {
             const uid = parseInt(session.userId);
-            // Tentar por id, depois por ponto, depois CurrentServer
-            servidorFinal = result.data.find(s => parseInt(s.id) === uid)
-                         || result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
-            // Último fallback: CurrentServer já populado pelo auth.js
-            if (!servidorFinal) {
-                const saved = CurrentServer.get();
-                if (saved) servidorFinal = result.data.find(s => parseInt(s.id) === parseInt(saved.id)) || saved;
+            let servidor = result.data.find(s => parseInt(s.id) === uid);
+            if (!servidor) {
+                // Fallback: buscar pelo ponto
+                servidor = result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
             }
-        } else {
-            // Admin: mostrar seletor
-            if (group) group.style.display = '';
-            const saved = CurrentServer.get();
-            servidorFinal = (saved && result.data.find(s => parseInt(s.id) === parseInt(saved.id))) || result.data[0];
-        }
-
-        if (servidorFinal) {
-            select.value = servidorFinal.id;
-            CurrentServer.set(servidorFinal);
-            servidorAtual = servidorFinal.id;
+            if (!servidor) {
+                // Último fallback: montar objeto da sessão
+                servidor = { id: session.userId, ponto: session.ponto, nome: session.nome, area: session.area };
+            }
+            CurrentServer.set(servidor);
+            servidorAtual = parseInt(servidor.id);
             await loadPresencaData();
             renderCalendar();
             if (typeof carregarRelatorio === 'function') carregarRelatorio();
         }
-
-        select.addEventListener('change', async function () {
-            if (this.value) {
-                servidorAtual = parseInt(this.value);
-                const servidor = result.data.find(s => s.id === servidorAtual);
-                CurrentServer.set(servidor);
-                await loadPresencaData();
-                renderCalendar();
-                if (typeof carregarRelatorio === 'function') carregarRelatorio();
-            }
-        });
+        return;
     }
+
+    // Admin: mostrar seletor com todos os colaboradores
+    if (group) group.style.display = '';
+    const result = await MockAPI.getTodosColaboradores();
+    if (!result || !result.success) return;
+
+    select.innerHTML = '<option value="">Selecione um servidor...</option>';
+    result.data.forEach(servidor => {
+        const option = document.createElement('option');
+        option.value = servidor.id;
+        option.textContent = `${servidor.nome} (Ponto ${servidor.ponto})`;
+        select.appendChild(option);
+    });
+
+    const saved = CurrentServer.get();
+    const servidorFinal = (saved && result.data.find(s => parseInt(s.id) === parseInt(saved.id))) || result.data[0];
+    if (servidorFinal) {
+        select.value = servidorFinal.id;
+        CurrentServer.set(servidorFinal);
+        servidorAtual = servidorFinal.id;
+        await loadPresencaData();
+        renderCalendar();
+        if (typeof carregarRelatorio === 'function') carregarRelatorio();
+    }
+
+    select.addEventListener('change', async function () {
+        if (this.value) {
+            servidorAtual = parseInt(this.value);
+            const servidor = result.data.find(s => s.id === servidorAtual);
+            CurrentServer.set(servidor);
+            await loadPresencaData();
+            renderCalendar();
+            if (typeof carregarRelatorio === 'function') carregarRelatorio();
+        }
+    });
 }
 
 // ── Cache de feriados por ano ─────────────────────────────────────────────────
