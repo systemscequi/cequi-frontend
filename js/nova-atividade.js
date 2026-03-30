@@ -159,7 +159,7 @@ function renderCategoriaBtns() {
     container.innerHTML = Object.entries(window.CATEGORIAS || {}).map(([key, cat]) => `
         <button class="category-btn cat-${key} ${key === categoriaAtualNov ? 'active' : ''}"
                 onclick="mudarCategoria('${key}')" title="${cat.nome}">
-            ${cat.icone ? cat.icone + ' ' : ''}${cat.nome}
+            ${cat.icone ? cat.icone + ' ' : ''}${key}
         </button>`).join('');
 }
 
