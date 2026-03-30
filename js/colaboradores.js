@@ -301,7 +301,7 @@ function excluirColaborador(id) {
     Notify.confirm(`Excluir "${col.nome}"? Esta ação não pode ser desfeita.`, () => {
         MockAPI.deleteColaborador(id).then(result => {
             if (result && result.success) {
-                colaboradores = colaboradores.filter(c => c.id !== id);
+                colaboradores = colaboradores.filter(c => parseInt(c.id) !== id);
                 DataStore.saveColaboradores(colaboradores);
                 renderizarTabela();
                 Notify.success('Colaborador excluído!');
