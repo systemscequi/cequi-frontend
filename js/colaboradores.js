@@ -280,18 +280,19 @@ function setupEventListeners() {
 
 // ─── Excluir ──────────────────────────────────────────────────────────
 function excluirColaborador(id) {
-    const col = colaboradores.find(c => c.id === id);
+    id = parseInt(id);
+    const col = colaboradores.find(c => parseInt(c.id) === id);
     if (!col) return;
 
     // Proteção: não pode excluir a própria conta
     const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
-    if (session && session.userId === id) {
+    if (session && parseInt(session.userId) === id) {
         Notify.error('Você não pode excluir sua própria conta.');
         return;
     }
 
     // Proteção: não pode excluir o último admin
-    const admins = colaboradores.filter(c => c.role === 'admin' && c.id !== id);
+    const admins = colaboradores.filter(c => c.role === 'admin' && parseInt(c.id) !== id);
     if (col.role === 'admin' && admins.length === 0) {
         Notify.error('Não é possível excluir o único administrador do sistema.');
         return;
