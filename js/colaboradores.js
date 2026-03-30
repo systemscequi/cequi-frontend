@@ -299,19 +299,14 @@ function excluirColaborador(id) {
     }
 
     Notify.confirm(`Excluir "${col.nome}"? Esta ação não pode ser desfeita.`, () => {
-        console.log('🗑️ Confirmado — chamando deleteColaborador id:', id);
         MockAPI.deleteColaborador(id).then(result => {
-            console.log('🗑️ Resultado:', result);
             if (result && result.success) {
-                colaboradores = colaboradores.filter(c => parseInt(c.id) !== id);
-                DataStore.saveColaboradores(colaboradores);
-                renderizarTabela();
+                loadColaboradores();
                 Notify.success('Colaborador excluído!');
             } else {
                 Notify.error(result?.message || 'Erro ao excluir colaborador.');
             }
         }).catch(e => {
-            console.log('🗑️ Erro:', e);
             Notify.error('Erro ao conectar com o servidor.');
         });
     });
