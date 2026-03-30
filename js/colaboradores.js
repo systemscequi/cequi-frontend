@@ -313,3 +313,7 @@ function excluirColaborador(id) {
         });
     });
 }
+
+// Expor funções globais para onclick inline
+window.excluirColaborador = excluirColaborador;
+window.abrirModalEdicao   = abrirModalEdicao;
