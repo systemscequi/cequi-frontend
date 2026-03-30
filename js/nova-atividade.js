@@ -28,6 +28,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     renderCategoriaBtns();
     renderComplexidadeBtns();
+
+    // Botão adicionar atividade
+    const btnAdd = document.getElementById('btnAdicionarAtiv');
+    if (btnAdd) btnAdd.addEventListener('click', adicionarAtividade);
+
+    // Select de atividade padrão
+    const selAtiv = document.getElementById('atividadePadrao');
+    if (selAtiv) selAtiv.addEventListener('change', selecionarAtividade);
     const params = new URLSearchParams(window.location.search);
     const paramProdId = params.get('produtoId') ? parseInt(params.get('produtoId')) : null;
     const paramSrvId  = params.get('servidorId') ? parseInt(params.get('servidorId')) : null;
