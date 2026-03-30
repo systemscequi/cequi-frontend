@@ -297,13 +297,15 @@ function excluirColaborador(id) {
         return;
     }
 
-    Notify.confirm(`Excluir "${col.nome}"? Esta ação não pode ser desfeita.`, () => {
-        MockAPI.deleteColaborador(id)
-            .then(function() {})
-            .catch(function() {});
-        colaboradores = colaboradores.filter(c => c.id !== id);
-        DataStore.saveColaboradores(colaboradores);
-        renderizarTabela();
-        Notify.success('Colaborador excluído!');
+    Notify.confirm(`Excluir "${col.nome}"? Esta ação não pode ser desfeita.`, async () => {
+        const result = await MockAPI.deleteColaborador(id);
+        if (result && result.success) {
+            colaboradores = colaboradores.filter(c => c.id !== id);
+            DataStore.saveColaboradores(colaboradores);
+            renderizarTabela();
+            Notify.success('Colaborador excluído!');
+        } else {
+            Notify.error(result?.message || 'Erro ao excluir colaborador.');
+        }
     });
 }
