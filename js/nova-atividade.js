@@ -9,7 +9,7 @@ let servidorAtualNov  = null;
 let produtoAtualNov   = null;
 let atividadeSel      = null;   // atividade padrão selecionada
 let complexidadeSel   = null;
-let categoriaAtualNov = 'DGSPI';
+let categoriaAtualNov = 'DGS';
 let modoAtividade     = null;   // 'livre' | 'padrao' | null
 let atividadesCache   = {};     // cache de atividades padrão (do backend ou mock)
 
@@ -36,29 +36,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // ── Servidores ────────────────────────────────────────────────────────────────
 async function loadServidores(paramSrvId = null, paramProdId = null) {
-    const result = await MockAPI.getColaboradores();
-    if (!result.success) return;
-
-    const select  = document.getElementById('serverSelect');
-    const group   = document.getElementById('serverGroup');
     const session = typeof Auth !== 'undefined' ? Auth.getSession() : null;
     const isAdmin = session && session.role === 'admin';
+    const group   = document.getElementById('serverGroup');
+    const select  = document.getElementById('serverSelect');
 
-    if (!isAdmin) {
+    if (!isAdmin && session) {
+        // Usuário comum: ocultar seletor, usar sessão
         if (group) group.style.display = 'none';
-        let saved = CurrentServer.get();
-        // Fallback: recuperar servidor do próprio usuário se CurrentServer estiver vazio
-        if (!saved && session) {
-            const colabs = window.MOCK_COLABORADORES || [];
-            const proprio = colabs.find(s => s.id === session.userId);
-            if (proprio) { CurrentServer.set(proprio); saved = proprio; }
+
+        const result = await MockAPI.getColaboradores();
+        let servidor = null;
+        if (result && result.success) {
+            const uid = parseInt(session.userId);
+            servidor = result.data.find(s => parseInt(s.id) === uid)
+                    || result.data.find(s => parseInt(s.ponto) === parseInt(session.ponto));
         }
-        if (saved) {
-            servidorAtualNov = saved.id;
-            await loadProdutosServidor(saved.id, paramProdId);
+        if (!servidor) {
+            servidor = { id: session.userId, ponto: session.ponto, nome: session.nome, area: session.area };
         }
+        CurrentServer.set(servidor);
+        servidorAtualNov = parseInt(servidor.id);
+        await loadProdutosServidor(servidor.id, paramProdId);
         return;
     }
+
+    // Admin: mostrar seletor
+    if (group) group.style.display = '';
+    const result = await MockAPI.getTodosColaboradores();
+    if (!result || !result.success) return;
 
     select.innerHTML = '<option value="">Selecione um servidor...</option>';
     result.data.forEach(s => {
@@ -68,104 +74,92 @@ async function loadServidores(paramSrvId = null, paramProdId = null) {
         select.appendChild(opt);
     });
 
-    // Prioridade: paramSrvId da URL > servidor salvo > primeiro da lista
     const alvoId = paramSrvId || (CurrentServer.get()?.id) || null;
-    const servidorAlvo = alvoId && result.data.find(s => s.id === alvoId);
+    const servidorAlvo = alvoId && result.data.find(s => parseInt(s.id) === parseInt(alvoId));
     const servidorFinal = servidorAlvo || result.data[0];
 
     if (servidorFinal) {
         select.value = servidorFinal.id;
         CurrentServer.set(servidorFinal);
-        servidorAtualNov = servidorFinal.id;
+        servidorAtualNov = parseInt(servidorFinal.id);
         await loadProdutosServidor(servidorFinal.id, paramProdId);
     }
 
     select.addEventListener('change', async function () {
-        const servidor = result.data.find(s => s.id === parseInt(this.value));
-        if (servidor) {
-            CurrentServer.set(servidor);
-            servidorAtualNov = servidor.id;
-            produtoAtualNov  = null;
-            resetFormulario();
-            await loadProdutosServidor(servidor.id);
+        const srv = result.data.find(s => s.id === parseInt(this.value));
+        if (srv) {
+            CurrentServer.set(srv);
+            servidorAtualNov = parseInt(srv.id);
+            await loadProdutosServidor(srv.id, null);
         }
     });
 }
 
-// ── Produtos em andamento ─────────────────────────────────────────────────────
 async function loadProdutosServidor(servidorId, paramProdId = null) {
-    const result = await MockAPI.getProdutos(servidorId);
     const select = document.getElementById('produtoSelect');
+    if (!select) return;
 
-    const emAndamento = result.success
-        ? result.data.filter(p => p.status === 'em-andamento' || !p.dataFim)
-        : [];
+    const result = await MockAPI.getProdutos(servidorId);
+    if (!result || !result.success) return;
 
-    if (emAndamento.length === 0) {
-        select.innerHTML = '<option value="">Nenhum produto em andamento</option>';
-        resetFormulario();
-        return;
-    }
+    // Filtrar só produtos em andamento
+    const emAndamento = result.data.filter(p => resolverStatus(p) === 'em-andamento');
 
-    select.innerHTML = '<option value="">Selecione um produto...</option>';
-    emAndamento.forEach(p => {
-        const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.textContent = `${p.codigo} — ${p.nome}`;
-        select.appendChild(opt);
-    });
+    select.innerHTML = emAndamento.length > 0
+        ? '<option value="">Selecione um produto...</option>' +
+          emAndamento.map(p => `<option value="${p.id}">${p.codigo} — ${p.nome}</option>`).join('')
+        : '<option value="">Nenhum produto em andamento</option>';
 
-    // Pré-selecionar produto se veio via URL
+    const selecionarProduto = (prodId) => {
+        const prod = result.data.find(p => p.id === parseInt(prodId));
+        if (prod) {
+            produtoAtualNov = prod;
+            if (!produtoAtualNov.atividades) produtoAtualNov.atividades = [];
+            atualizarPainel();
+            // Mostrar form e esconder mensagem inicial
+            const semProduto = document.getElementById('semProdutoMsg');
+            const formAtiv   = document.getElementById('formAtividade');
+            if (semProduto) semProduto.style.display = 'none';
+            if (formAtiv)   formAtiv.style.display   = '';
+            // Inicializar categorias e atividades
+            renderCategoriaBtns();
+            atualizarSelectAtividades();
+        } else {
+            produtoAtualNov = null;
+            const semProduto = document.getElementById('semProdutoMsg');
+            const formAtiv   = document.getElementById('formAtividade');
+            if (semProduto) semProduto.style.display = '';
+            if (formAtiv)   formAtiv.style.display   = 'none';
+            atualizarPainel();
+        }
+    };
+
+    // Pré-selecionar se veio por URL
     if (paramProdId) {
-        const prodAlvo = emAndamento.find(p => p.id === paramProdId);
-        if (prodAlvo) {
-            select.value = prodAlvo.id;
-            selecionarProduto();
+        const opt = [...select.options].find(o => o.value == paramProdId);
+        if (opt) {
+            select.value = paramProdId;
+            selecionarProduto(paramProdId);
         }
     }
+
+    select.onchange = function () {
+        if (!this.value) {
+            produtoAtualNov = null;
+            atualizarPainel();
+            return;
+        }
+        selecionarProduto(this.value);
+    };
 }
 
-function selecionarProduto() {
-    const id = parseInt(document.getElementById('produtoSelect').value);
-    if (!id) { produtoAtualNov = null; resetFormulario(); return; }
-
-    const todos = DataStore.getProdutos().filter(p => p.servidorId === servidorAtualNov);
-    produtoAtualNov = todos.find(p => p.id === id) || null;
-
-    if (produtoAtualNov) { mostrarFormulario(); atualizarPainel(); }
-}
-
-// ── Formulário ────────────────────────────────────────────────────────────────
-function mostrarFormulario() {
-    document.getElementById('semProdutoMsg').style.display = 'none';
-    document.getElementById('formAtividade').style.display = 'block';
-    atualizarSelectAtividades();
-}
-
-function resetFormulario() {
-    document.getElementById('semProdutoMsg').style.display = 'flex';
-    document.getElementById('formAtividade').style.display = 'none';
-    document.getElementById('atividadeInfo').style.display = 'none';
-    document.getElementById('pontosPreview').classList.remove('visible');
-    if (document.getElementById('descricaoLivre'))
-        document.getElementById('descricaoLivre').value = '';
-    if (document.getElementById('obsAtividade'))
-        document.getElementById('obsAtividade').value = '';
-    atividadeSel    = null;
-    complexidadeSel = null;
-    modoAtividade   = null;
-    aplicarExclusividade();
-    atualizarPainel();
-}
-
-// ── Categorias ────────────────────────────────────────────────────────────────
 function renderCategoriaBtns() {
     const container = document.getElementById('categoriaBtns');
     if (!container) return;
     container.innerHTML = Object.entries(window.CATEGORIAS || {}).map(([key, cat]) => `
         <button class="category-btn cat-${key} ${key === categoriaAtualNov ? 'active' : ''}"
                 onclick="mudarCategoria('${key}')" title="${cat.nome}">
-            ${cat.icone} ${key}
+            ${cat.icone ? cat.icone + ' ' : ''}${cat.nome}
         </button>`).join('');
 }
 
@@ -394,7 +388,7 @@ function atualizarPainel() {
                     ${a.tipoLivre
                         ? `<span style="font-size:0.7rem;background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid var(--warning);border-radius:4px;padding:0.1rem 0.35rem;">LIVRE</span>`
                         : a.codigo}
-                    <span style="font-size:0.7rem;color:var(--text-muted);margin-left:0.35rem;">${(window.CATEGORIAS[a.categoria]?.icone || '')} ${a.categoria}</span>
+                    <span style="font-size:0.7rem;color:var(--text-muted);margin-left:0.35rem;">${(window.CATEGORIAS[a.categoria]?.nome || a.categoria)}</span>
                 </div>
                 <div class="painel-item-nome">${a.atividade}</div>
                 <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.15rem;">
@@ -446,7 +440,7 @@ function editarAtividadePainel(idx) {
         // Código (somente leitura)
         '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:1rem;">' +
             '<span style="font-family:var(--code-font);font-size:0.85rem;color:var(--secondary-light);font-weight:700;background:var(--bg-dark);padding:0.2rem 0.6rem;border-radius:4px;">' + (ativ.tipoLivre ? 'LIVRE' : ativ.codigo) + '</span>' +
-            '<span style="font-size:0.75rem;color:var(--text-muted);">' + (window.CATEGORIAS?.[ativ.categoria]?.icone || '') + ' ' + ativ.categoria + '</span>' +
+            '<span style="font-size:0.75rem;color:var(--text-muted);">' + (window.CATEGORIAS?.[ativ.categoria]?.nome || ativ.categoria) + '</span>' +
         '</div>' +
         // Descrição — editável sempre
         '<div style="margin-bottom:1rem;">' +
