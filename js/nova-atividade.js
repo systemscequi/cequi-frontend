@@ -18,13 +18,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Carrega atividades padrão do backend (ou mock como fallback)
     try {
         const result = await MockAPI.getAtividades();
-        if (result.success && result.data && typeof result.data === 'object') {
+        if (result.success && result.data && typeof result.data === 'object'
+            && Object.keys(result.data).length > 0
+            && Object.values(result.data).some(arr => arr.length > 0)) {
             atividadesCache = result.data;
         } else {
-            atividadesCache = MOCK_ATIVIDADES;
+            atividadesCache = window.MOCK_ATIVIDADES || {};
         }
     } catch (e) {
-        atividadesCache = MOCK_ATIVIDADES;
+        atividadesCache = window.MOCK_ATIVIDADES || {};
     }
     renderCategoriaBtns();
     renderComplexidadeBtns();
@@ -110,8 +112,10 @@ async function loadProdutosServidor(servidorId, paramProdId = null) {
     const result = await MockAPI.getProdutos(servidorId);
     if (!result || !result.success) return;
 
-    // Filtrar só produtos em andamento
-    const emAndamento = result.data.filter(p => resolverStatus(p) === 'em-andamento');
+    // Filtrar produtos em andamento — usar status do banco diretamente
+    const emAndamento = result.data.filter(p => 
+        p.status === 'em-andamento' || (!p.status && !p.dataFim)
+    );
 
     select.innerHTML = emAndamento.length > 0
         ? '<option value="">Selecione um produto...</option>' +
@@ -132,6 +136,18 @@ async function loadProdutosServidor(servidorId, paramProdId = null) {
             // Inicializar categorias e atividades
             renderCategoriaBtns();
             atualizarSelectAtividades();
+            // Registrar listener do select de atividade padrão após form aparecer
+            const selAtiv = document.getElementById('atividadePadrao');
+            if (selAtiv && !selAtiv._listenerAdded) {
+                selAtiv.addEventListener('change', selecionarAtividade);
+                selAtiv._listenerAdded = true;
+            }
+            // Registrar botão adicionar
+            const btnAdd = document.getElementById('btnAdicionarAtiv');
+            if (btnAdd && !btnAdd._listenerAdded) {
+                btnAdd.addEventListener('click', adicionarAtividade);
+                btnAdd._listenerAdded = true;
+            }
         } else {
             produtoAtualNov = null;
             const semProduto = document.getElementById('semProdutoMsg');
