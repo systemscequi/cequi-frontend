@@ -297,15 +297,18 @@ function excluirColaborador(id) {
         return;
     }
 
-    Notify.confirm(`Excluir "${col.nome}"? Esta ação não pode ser desfeita.`, async () => {
-        const result = await MockAPI.deleteColaborador(id);
-        if (result && result.success) {
-            colaboradores = colaboradores.filter(c => c.id !== id);
-            DataStore.saveColaboradores(colaboradores);
-            renderizarTabela();
-            Notify.success('Colaborador excluído!');
-        } else {
-            Notify.error(result?.message || 'Erro ao excluir colaborador.');
-        }
+    Notify.confirm(`Excluir "${col.nome}"? Esta ação não pode ser desfeita.`, () => {
+        MockAPI.deleteColaborador(id).then(result => {
+            if (result && result.success) {
+                colaboradores = colaboradores.filter(c => c.id !== id);
+                DataStore.saveColaboradores(colaboradores);
+                renderizarTabela();
+                Notify.success('Colaborador excluído!');
+            } else {
+                Notify.error(result?.message || 'Erro ao excluir colaborador.');
+            }
+        }).catch(() => {
+            Notify.error('Erro ao conectar com o servidor.');
+        });
     });
 }
