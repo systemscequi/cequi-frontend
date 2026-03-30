@@ -167,7 +167,7 @@
         <!-- Seletor de produto -->
         <div class="produto-selector">
             <label>PRODUTO:</label>
-            <select id="produtoSelect" >
+            <select id="produtoSelect" onchange="selecionarProduto()">
                 <option value="">Selecione um servidor primeiro...</option>
             </select>
         </div>
@@ -220,7 +220,7 @@
                             Atividade Padrão
                             <span style="color:var(--text-muted);font-size:0.75rem;margin-left:0.5rem;" id="countAtivs"></span>
                         </label>
-                        <select class="form-select" id="atividadePadrao" id="selectAtividadePadrao">
+                        <select class="form-select" id="atividadePadrao" onchange="selecionarAtividade()">
                             <option value="">Selecione uma atividade...</option>
                         </select>
                     </div>
@@ -250,7 +250,7 @@
                         <input type="text" class="form-input" id="obsAtividade"
                                placeholder="Descrição resumida do que foi feito...">
                     </div>
-                    <button class="btn-salvar-ativ" id="btnAdicionarAtiv">Salvar/Adicionar</button>
+                    <button class="btn-salvar-ativ" class="btn-salvar-ativ" onclick="adicionarAtividade()">Salvar/Adicionar</button>
                 </div>
             </div>
 
@@ -287,7 +287,7 @@
     <script src="../js/api-client.js?v=2"></script>
     <script src="../js/export.js"></script>
     <script src="../js/auth.js?v=2"></script>
-    <script src="../js/nova-atividade.js?v=9"></script>
+    <script src="../js/nova-atividade.js?v=11"></script>
     <script src="../js/theme.js"></script>
 
     <script>
