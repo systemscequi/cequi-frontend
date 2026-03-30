@@ -158,9 +158,12 @@ function renderCategoriaBtns() {
     if (!container) return;
     container.innerHTML = Object.entries(window.CATEGORIAS || {}).map(([key, cat]) => `
         <button class="category-btn cat-${key} ${key === categoriaAtualNov ? 'active' : ''}"
-                onclick="mudarCategoria('${key}')" title="${cat.nome}">
+                data-cat="${key}" title="${cat.nome}">
             ${cat.icone ? cat.icone + ' ' : ''}${key}
         </button>`).join('');
+    container.querySelectorAll('.category-btn').forEach(btn => {
+        btn.addEventListener('click', () => mudarCategoria(btn.dataset.cat));
+    });
 }
 
 function mudarCategoria(cat) {
@@ -261,14 +264,13 @@ function aplicarExclusividade() {
 function renderComplexidadeBtns() {
     const container = document.getElementById('complexidadeBtns');
     if (!container) return;
-    (window.COMPLEXIDADES || [0.5, 1, 1.5]).forEach(v => {
-        // Não recriar botões que já existem — só atualizar classe active
-    });
     container.innerHTML = (window.COMPLEXIDADES || [0.5, 1, 1.5]).map(v => `
-        <button class="complexity-btn ${complexidadeSel === v ? 'active' : ''}"
-                onclick="selecionarComplexidade(${v})">
+        <button class="complexity-btn ${complexidadeSel === v ? 'active' : ''}" data-val="${v}">
             <div style="font-size:1.1rem;font-weight:700;">${v}</div>
         </button>`).join('');
+    container.querySelectorAll('.complexity-btn').forEach(btn => {
+        btn.addEventListener('click', () => selecionarComplexidade(parseFloat(btn.dataset.val)));
+    });
 }
 
 function selecionarComplexidade(val) {
