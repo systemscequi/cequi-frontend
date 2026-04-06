@@ -190,11 +190,11 @@ function renderStep1() {
 async function abrirModalReaproveitar() {
     // Carregar todos os produtos do banco (não só do servidor atual)
     let todosProdutos = [];
+    let todosColabs = [];
     try {
         const result = await MockAPI.getProdutos();
         if (result && result.success) { todosProdutos = result.data; _todosProdsReap = result.data; }
         const colabResult = await MockAPI.getTodosColaboradores();
-        let todosColabs = [];
         if (colabResult && colabResult.success) todosColabs = colabResult.data;
     } catch(e) {
         todosProdutos = DataStore.getProdutos() || [];
