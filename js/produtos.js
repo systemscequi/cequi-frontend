@@ -10,6 +10,7 @@ let atividadeSelecionada = null;
 let complexidadeSelecionada = null;
 let buscaAtividade = '';
 let atividadesProd = {}; // cache de atividades padrão (backend ou mock)
+let _todosProdsReap = []; // cache para modal de reaproveitar
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Carrega atividades do backend, com fallback para mock local
@@ -191,7 +192,7 @@ async function abrirModalReaproveitar() {
     let todosProdutos = [];
     try {
         const result = await MockAPI.getProdutos();
-        if (result && result.success) todosProdutos = result.data;
+        if (result && result.success) { todosProdutos = result.data; _todosProdsReap = result.data; }
         const colabResult = await MockAPI.getTodosColaboradores();
         let todosColabs = [];
         if (colabResult && colabResult.success) todosColabs = colabResult.data;
@@ -329,9 +330,10 @@ function toggleReapCard(prodId) {
 }
 
 function confirmarReaproveitar(produtoId) {
-    // Buscar em todos os produtos disponíveis (não apenas do servidor atual)
-    const todos = DataStore.getProdutos() || [];
-    const original = todos.find(p => p.id === produtoId || p.id === parseInt(produtoId));
+    // Buscar no DataStore (cache do banco)
+    const id = parseInt(produtoId);
+    const todos = _todosProdsReap.length > 0 ? _todosProdsReap : (DataStore.getProdutos() || []);
+    const original = todos.find(p => parseInt(p.id) === id);
     if (!original) { Notify.error('Produto não encontrado.'); return; }
 
     document.getElementById('modalReaproveitar')?.remove();
