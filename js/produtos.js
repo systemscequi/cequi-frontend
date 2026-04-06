@@ -190,8 +190,11 @@ async function abrirModalReaproveitar() {
     // Carregar todos os produtos do banco (não só do servidor atual)
     let todosProdutos = [];
     try {
-        const result = await MockAPI.getProdutos(); // sem servidorId = todos (admin) ou próprios (user)
+        const result = await MockAPI.getProdutos();
         if (result && result.success) todosProdutos = result.data;
+        const colabResult = await MockAPI.getTodosColaboradores();
+        let todosColabs = [];
+        if (colabResult && colabResult.success) todosColabs = colabResult.data;
     } catch(e) {
         todosProdutos = DataStore.getProdutos() || [];
     }
@@ -200,6 +203,8 @@ async function abrirModalReaproveitar() {
         Notify.warning('Nenhum produto encontrado na base de dados.');
         return;
     }
+    const colabMap = {};
+    todosColabs.forEach(c => { colabMap[c.id] = c.nome; });
 
     // Montar lista de meses disponíveis
     const mesesDisp = [...new Set(
@@ -217,13 +222,15 @@ async function abrirModalReaproveitar() {
             .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
     }
 
-    function renderListaReap(mesFiltro, textoBusca) {
+    function renderListaReap(mesFiltro, textoBusca, servidorFiltro) {
         let filtrados = todosProdutos.filter(p => {
             if (!p.dataInicio) return false;
             if (mesFiltro && p.dataInicio.substring(0, 7) !== mesFiltro) return false;
+            if (servidorFiltro && String(p.servidorId) !== String(servidorFiltro)) return false;
             if (textoBusca) {
                 const t = textoBusca.toLowerCase();
-                if (!p.nome.toLowerCase().includes(t) && !(p.codigo||'').toLowerCase().includes(t)) return false;
+                const nomeServidor = colabMap[p.servidorId] || '';
+                if (!p.nome.toLowerCase().includes(t) && !(p.codigo||'').toLowerCase().includes(t) && !nomeServidor.toLowerCase().includes(t)) return false;
             }
             return true;
         });
@@ -284,6 +291,10 @@ async function abrirModalReaproveitar() {
         + '<select id="reapMesSelect" style="padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;cursor:pointer;">'
         + '<option value="">Todos os meses</option>' + mesOpts
         + '</select>'
+        + '<select id="reapServidorSelect" style="padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;cursor:pointer;">'
+        + '<option value="">Todos os servidores</option>'
+        + todosColabs.map(c => '<option value="' + c.id + '">' + c.nome + '</option>').join('')
+        + '</select>'
         + '<input type="text" id="reapBusca" placeholder="Buscar por nome ou código..." style="flex:1;min-width:150px;padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;">'
         + '</div>'
         + '<div id="reapLista" style="overflow-y:auto;flex:1;padding-right:0.25rem;">' + renderListaReap(mesAtual, '') + '</div>'
@@ -297,10 +308,12 @@ async function abrirModalReaproveitar() {
     const inpBusc = overlay.querySelector('#reapBusca');
     selMes.value = mesAtual;
 
+    const selSrv = overlay.querySelector('#reapServidorSelect');
     function atualizarLista() {
-        overlay.querySelector('#reapLista').innerHTML = renderListaReap(selMes.value, inpBusc.value.trim());
+        overlay.querySelector('#reapLista').innerHTML = renderListaReap(selMes.value, inpBusc.value.trim(), selSrv ? selSrv.value : '');
     }
     selMes.addEventListener('change', atualizarLista);
+    if (selSrv) selSrv.addEventListener('change', atualizarLista);
     inpBusc.addEventListener('input', Utils.debounce ? Utils.debounce(atualizarLista, 250) : atualizarLista);
 }
 
