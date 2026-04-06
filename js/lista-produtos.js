@@ -551,8 +551,7 @@ function editarProduto(id) {
 
     const statusOpcoes = [
         { value: 'em-andamento',  label: 'Em Andamento',  cor: 'var(--warning)',  adminOnly: false },
-        { value: 'finalizado',    label: 'Finalizado',    cor: 'var(--success)',  adminOnly: false },
-        { value: 'nao-concluido', label: 'Não Concluído', cor: 'var(--danger)',   adminOnly: true  }
+        { value: 'finalizado',    label: 'Finalizado',    cor: 'var(--success)',  adminOnly: false }
     ];
 
     const statusBtnsHTML = statusOpcoes.map(s => {
@@ -570,7 +569,7 @@ function editarProduto(id) {
                    font-weight:${ativo ? '700' : '400'};
                    cursor:${disabled ? 'not-allowed' : 'pointer'};font-size:0.82rem;transition:all 0.15s;
                    opacity:${disabled ? '0.45' : '1'};">
-            ${s.label}${s.adminOnly ? ' 🔒' : ''}
+            ${s.label}
         </button>`;
     }).join('');
 
