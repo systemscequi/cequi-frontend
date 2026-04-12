@@ -390,10 +390,22 @@ async function abrirModalReaproveitar() {
 
             Notify.info('Salvando ' + originais.length + ' produtos...');
 
-            // Buscar produtos existentes do servidor para gerar código sequencial
-            const todosProdAtual = DataStore.getProdutos() || [];
-            const prodsSrv = todosProdAtual.filter(p => parseInt(p.servidorId) === parseInt(server.id));
-            let proximoSeq = prodsSrv.length + 1;
+            // Buscar maior código existente do servidor para garantir sequencial único
+            let proximoSeq = 1;
+            try {
+                const prodsSrvResult = await MockAPI.getProdutos(server.id);
+                if (prodsSrvResult && prodsSrvResult.success && prodsSrvResult.data.length > 0) {
+                    const maxCodigo = prodsSrvResult.data
+                        .map(p => parseInt(p.codigo) || 0)
+                        .reduce((max, v) => v > max ? v : max, 0);
+                    proximoSeq = maxCodigo + 1;
+                }
+            } catch(e) {
+                const cache = DataStore.getProdutos() || [];
+                const prodsSrv = cache.filter(p => parseInt(p.servidorId) === parseInt(server.id));
+                const maxCodigo = prodsSrv.map(p => parseInt(p.codigo) || 0).reduce((max, v) => v > max ? v : max, 0);
+                proximoSeq = maxCodigo + 1;
+            }
 
             let salvos = 0;
             for (const ori of originais) {
