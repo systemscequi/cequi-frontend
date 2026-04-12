@@ -21,7 +21,7 @@
             background: var(--bg-mid);
             border: 1px solid var(--border);
             border-radius: 10px;
-            margin-bottom: 0;
+            margin-bottom: 1.5rem;
             flex-wrap: wrap;
         }
         .produto-selector label {
@@ -154,29 +154,28 @@
             <p class="page-subtitle">Adicione atividades a um produto em andamento</p>
         </div>
 
-        <!-- Layout principal: esquerda = seletores + form, direita = painel atividades -->
+        <!-- Seletor de servidor -->
+        <div class="server-selector" id="serverGroup" style="display:none;">
+            <div style="display:flex;align-items:center;gap:1.25rem;">
+                <label>SERVIDOR:</label>
+                <select id="serverSelect">
+                    <option value="">Carregando...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Seletor de produto -->
+        <div class="produto-selector">
+            <label>PRODUTO:</label>
+            <select id="produtoSelect" onchange="selecionarProduto()">
+                <option value="">Selecione um servidor primeiro...</option>
+            </select>
+        </div>
+
+        <!-- Layout principal -->
         <div class="nova-ativ-layout">
 
-            <!-- Coluna esquerda: seletores + formulário -->
-            <div>
-                <!-- Seletor de servidor -->
-                <div class="server-selector" id="serverGroup" style="display:none;margin-bottom:1rem;">
-                    <div style="display:flex;align-items:center;gap:1.25rem;">
-                        <label>SERVIDOR:</label>
-                        <select id="serverSelect">
-                            <option value="">Carregando...</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Seletor de produto -->
-                <div class="produto-selector" style="margin-bottom:1rem;">
-                    <label>PRODUTO:</label>
-                    <select id="produtoSelect" onchange="selecionarProduto()">
-                        <option value="">Selecione um servidor primeiro...</option>
-                    </select>
-                </div>
-
+            <!-- Formulário esquerdo -->
             <div class="card">
                 <h2 class="card-title">Adicionar Atividade</h2>
 
@@ -254,7 +253,6 @@
                     <button class="btn-salvar-ativ" class="btn-salvar-ativ" onclick="adicionarAtividade()">Salvar/Adicionar</button>
                 </div>
             </div>
-            </div><!-- fim coluna esquerda -->
 
             <!-- Painel direito -->
             <div class="painel-atividades">
@@ -289,7 +287,7 @@
     <script src="../js/api-client.js?v=2"></script>
     <script src="../js/export.js"></script>
     <script src="../js/auth.js?v=2"></script>
-    <script src="../js/nova-atividade.js?v=11"></script>
+    <script src="../js/nova-atividade.js?v=12"></script>
     <script src="../js/theme.js"></script>
 
     <script>
