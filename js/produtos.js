@@ -188,7 +188,6 @@ function renderStep1() {
 
 // ── Modal de reaproveitamento ─────────────────────────────────────────────────
 async function abrirModalReaproveitar() {
-    // Carregar todos os produtos do banco (não só do servidor atual)
     let todosProdutos = [];
     let todosColabs = [];
     try {
@@ -204,20 +203,21 @@ async function abrirModalReaproveitar() {
         Notify.warning('Nenhum produto encontrado na base de dados.');
         return;
     }
+
     const colabMap = {};
     todosColabs.forEach(c => { colabMap[c.id] = c.nome; });
 
-    // Montar lista de meses disponíveis
-    const mesesDisp = [...new Set(
-        todosProdutos
-            .filter(p => p.dataInicio)
-            .map(p => p.dataInicio.substring(0, 7))
-    )].sort().reverse();
+    // Produtos selecionados (Set de ids)
+    const selecionados = new Set();
 
+    // Meses disponíveis
+    const mesesDisp = [...new Set(
+        todosProdutos.filter(p => p.dataInicio).map(p => p.dataInicio.substring(0, 7))
+    )].sort().reverse();
     const mesAtual = mesesDisp[0] || new Date().toISOString().substring(0, 7);
 
     function getNomeMes(mesKey) {
-        if (!mesKey || mesKey === 'Sem data') return 'Sem data';
+        if (!mesKey) return 'Sem data';
         const [ano, m] = mesKey.split('-');
         return new Date(parseInt(ano), parseInt(m) - 1, 1)
             .toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
@@ -241,39 +241,57 @@ async function abrirModalReaproveitar() {
 
         return filtrados.map(p => {
             const totalPts = (p.atividades || []).reduce((s, a) => s + (a.pontos || 0), 0).toFixed(1);
+            const sel = selecionados.has(p.id);
+
             const atvsHTML = (p.atividades || []).map(a =>
-                '<div style="display:flex;justify-content:space-between;padding:0.35rem 0;border-bottom:1px solid var(--border);gap:0.5rem;">'
-                + '<div style="flex:1;min-width:0;">'
-                + '<span style="font-family:var(--code-font);font-size:0.75rem;color:var(--secondary-light);font-weight:700;">' + a.codigo + '</span>'
-                + '<span style="font-size:0.73rem;color:var(--text-secondary);margin-left:0.4rem;">' + a.atividade + '</span>'
-                + '</div>'
-                + '<div style="font-size:0.72rem;white-space:nowrap;color:var(--text-muted);">'
-                + a.peso + ' x ' + a.complexidade + ' = <strong style="color:var(--success);">' + a.pontos + ' pts</strong>'
-                + '</div></div>'
+                '<div style="display:flex;justify-content:space-between;padding:0.3rem 0;border-bottom:1px solid var(--border);gap:0.5rem;">' +
+                '<div style="flex:1;min-width:0;">' +
+                '<span style="font-family:var(--code-font);font-size:0.75rem;color:var(--secondary-light);font-weight:700;">' + a.codigo + '</span>' +
+                '<span style="font-size:0.73rem;color:var(--text-secondary);margin-left:0.4rem;">' + a.atividade + '</span>' +
+                '</div>' +
+                '<div style="font-size:0.72rem;white-space:nowrap;color:var(--text-muted);">' +
+                a.peso + ' x ' + a.complexidade + ' = <strong style="color:var(--success);">' + a.pontos + ' pts</strong>' +
+                '</div></div>'
             ).join('');
 
-            return '<div id="card-reap-' + p.id + '" style="background:var(--bg-dark);border:1px solid var(--border);border-radius:8px;margin-bottom:0.5rem;overflow:hidden;">'
-                + '<div onclick="toggleReapCard(' + p.id + ')" style="padding:0.85rem 1rem;cursor:pointer;display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;"'
-                + ' onmouseover="document.getElementById(\'card-reap-' + p.id + '\').style.borderColor=\'var(--primary)\'"'
-                + ' onmouseout="document.getElementById(\'card-reap-' + p.id + '\').style.borderColor=\'var(--border)\'">'
-                + '<div style="flex:1;min-width:0;">'
-                + '<div style="font-family:var(--code-font);font-weight:700;color:var(--secondary-light);font-size:0.85rem;">#' + p.codigo
-                + '<span style="font-weight:400;color:var(--text-muted);margin-left:0.5rem;font-size:0.75rem;">' + (p.atividades?.length || 0) + ' atividades</span></div>'
-                + '<div style="font-size:0.85rem;font-weight:600;margin-top:0.2rem;">' + p.nome + '</div>'
-                + '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">'
-                + (p.dataInicio ? Utils.formatDate(p.dataInicio) : '—')
-                + (p.dataFim ? ' → ' + Utils.formatDate(p.dataFim) : ' → Em andamento') + '</div>'
-                + '</div>'
-                + '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.4rem;flex-shrink:0;">'
-                + '<div style="font-size:1.3rem;font-weight:700;color:var(--accent);font-family:var(--code-font);">' + totalPts
-                + '<span style="font-size:0.65rem;color:var(--text-muted);margin-left:2px;">pts</span></div>'
-                + '<span id="arrow-' + p.id + '" style="font-size:0.7rem;color:var(--text-muted);">▼ ver atividades</span>'
-                + '</div></div>'
-                + '<div id="painel-reap-' + p.id + '" style="display:none;padding:0 1rem 0.75rem;border-top:1px solid var(--border);">'
-                + '<div style="padding-top:0.5rem;margin-bottom:0.75rem;">' + atvsHTML + '</div>'
-                + '<button onclick="confirmarReaproveitar(' + p.id + ')" class="btn btn-primary" style="width:100%;font-size:0.85rem;">Importar este produto</button>'
-                + '</div></div>';
+            return '<div id="card-reap-' + p.id + '" style="background:var(--bg-dark);border:2px solid ' + (sel ? 'var(--primary)' : 'var(--border)') + ';border-radius:8px;margin-bottom:0.5rem;overflow:hidden;transition:border-color 0.15s;">' +
+                '<div style="padding:0.85rem 1rem;display:flex;justify-content:space-between;align-items:flex-start;gap:0.5rem;">' +
+                // Info do produto (clicável para expandir)
+                '<div onclick="toggleReapCard(' + p.id + ')" style="flex:1;min-width:0;cursor:pointer;">' +
+                '<div style="font-family:var(--code-font);font-weight:700;color:var(--secondary-light);font-size:0.85rem;">#' + p.codigo +
+                '<span style="font-weight:400;color:var(--text-muted);margin-left:0.5rem;font-size:0.75rem;">' + (p.atividades?.length || 0) + ' atividades</span></div>' +
+                '<div style="font-size:0.85rem;font-weight:600;margin-top:0.2rem;">' + p.nome + '</div>' +
+                '<div style="font-size:0.72rem;color:var(--text-muted);margin-top:0.2rem;">' +
+                (p.dataInicio ? Utils.formatDate(p.dataInicio) : '—') +
+                (p.dataFim ? ' → ' + Utils.formatDate(p.dataFim) : ' → Em andamento') + '</div>' +
+                (colabMap[p.servidorId] ? '<div style="font-size:0.7rem;color:var(--accent);margin-top:0.15rem;">👤 ' + colabMap[p.servidorId] + '</div>' : '') +
+                '</div>' +
+                // Lado direito: pontos + botão selecionar
+                '<div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;flex-shrink:0;">' +
+                '<div style="font-size:1.3rem;font-weight:700;color:var(--accent);font-family:var(--code-font);">' + totalPts +
+                '<span style="font-size:0.65rem;color:var(--text-muted);margin-left:2px;">pts</span></div>' +
+                '<button onclick="toggleSelecaoReap(' + p.id + ')" style="padding:0.3rem 0.75rem;border-radius:6px;border:2px solid ' + (sel ? 'var(--primary)' : 'var(--border)') + ';background:' + (sel ? 'var(--primary)' : 'transparent') + ';color:' + (sel ? 'white' : 'var(--text-secondary)') + ';font-size:0.78rem;font-weight:600;cursor:pointer;transition:all 0.15s;white-space:nowrap;">' +
+                (sel ? '✓ Selecionado' : '+ Selecionar') +
+                '</button>' +
+                '<span id="arrow-' + p.id + '" onclick="toggleReapCard(' + p.id + ')" style="font-size:0.68rem;color:var(--text-muted);cursor:pointer;">▼ atividades</span>' +
+                '</div></div>' +
+                // Painel expansível de atividades
+                '<div id="painel-reap-' + p.id + '" style="display:none;padding:0 1rem 0.75rem;border-top:1px solid var(--border);">' +
+                '<div style="padding-top:0.5rem;">' + atvsHTML + '</div>' +
+                '</div></div>';
         }).join('');
+    }
+
+    function atualizarContador() {
+        const el = document.getElementById('reapContador');
+        const btn = document.getElementById('btnImportarSelecionados');
+        if (el) el.textContent = selecionados.size > 0
+            ? selecionados.size + ' produto(s) selecionado(s)'
+            : 'Nenhum selecionado';
+        if (btn) {
+            btn.disabled = selecionados.size === 0;
+            btn.style.opacity = selecionados.size === 0 ? '0.4' : '1';
+        }
     }
 
     const overlay = document.createElement('div');
@@ -282,34 +300,130 @@ async function abrirModalReaproveitar() {
 
     const mesOpts = mesesDisp.map(m => '<option value="' + m + '">' + getNomeMes(m) + '</option>').join('');
 
-    overlay.innerHTML = '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:14px;padding:1.75rem;width:100%;max-width:560px;max-height:85vh;display:flex;flex-direction:column;">'
-        + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">'
-        + '<div><h3 style="font-size:1.05rem;margin:0;">Reaproveitar Produto</h3>'
-        + '<p style="font-size:0.78rem;color:var(--text-muted);margin:0.2rem 0 0;">Selecione um produto da base para importar</p></div>'
-        + '<button onclick="document.getElementById(\'modalReaproveitar\').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.4rem;">&times;</button>'
-        + '</div>'
-        + '<div style="display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap;">'
-        + '<select id="reapMesSelect" style="padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;cursor:pointer;">'
-        + '<option value="">Todos os meses</option>' + mesOpts
-        + '</select>'
-        + '<select id="reapServidorSelect" style="padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;cursor:pointer;">'
-        + '<option value="">Todos os servidores</option>'
-        + todosColabs.map(c => '<option value="' + c.id + '">' + c.nome + '</option>').join('')
-        + '</select>'
-        + '<input type="text" id="reapBusca" placeholder="Buscar por nome ou código..." style="flex:1;min-width:150px;padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;">'
-        + '</div>'
-        + '<div id="reapLista" style="overflow-y:auto;flex:1;padding-right:0.25rem;">' + renderListaReap(mesAtual, '') + '</div>'
-        + '</div>';
+    overlay.innerHTML = '<div style="background:var(--bg-mid);border:1px solid var(--border);border-radius:14px;padding:1.75rem;width:100%;max-width:580px;max-height:90vh;display:flex;flex-direction:column;">' +
+        // Cabeçalho
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">' +
+        '<div><h3 style="font-size:1.05rem;margin:0;">Reaproveitar Produtos</h3>' +
+        '<p style="font-size:0.78rem;color:var(--text-muted);margin:0.2rem 0 0;">Selecione um ou mais produtos para importar</p></div>' +
+        '<button onclick="document.getElementById(\'modalReaproveitar\').remove()" style="background:none;border:none;color:var(--text-muted);cursor:pointer;font-size:1.4rem;">&times;</button>' +
+        '</div>' +
+        // Filtros
+        '<div style="display:flex;gap:0.75rem;margin-bottom:0.75rem;flex-wrap:wrap;">' +
+        '<select id="reapMesSelect" style="padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;cursor:pointer;">' +
+        '<option value="">Todos os meses</option>' + mesOpts + '</select>' +
+        '<select id="reapServidorSelect" style="padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;cursor:pointer;">' +
+        '<option value="">Todos os servidores</option>' +
+        todosColabs.map(c => '<option value="' + c.id + '">' + c.nome + '</option>').join('') +
+        '</select>' +
+        '<input type="text" id="reapBusca" placeholder="Buscar..." style="flex:1;min-width:120px;padding:0.35rem 0.7rem;background:var(--bg-dark);border:1px solid var(--border);color:var(--text-primary);border-radius:6px;font-size:0.85rem;">' +
+        '</div>' +
+        // Lista
+        '<div id="reapLista" style="overflow-y:auto;flex:1;padding-right:0.25rem;">' + renderListaReap(mesAtual, '', '') + '</div>' +
+        // Rodapé
+        '<div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;gap:0.75rem;">' +
+        '<span id="reapContador" style="font-size:0.8rem;color:var(--text-muted);">Nenhum selecionado</span>' +
+        '<button id="btnImportarSelecionados" onclick="importarSelecionados()" disabled style="opacity:0.4;padding:0.5rem 1.25rem;background:var(--primary);border:none;color:white;border-radius:6px;font-size:0.88rem;font-weight:600;cursor:pointer;">✓ Importar Selecionados</button>' +
+        '</div>' +
+        '</div>';
 
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
-    // Atualizar lista ao mudar filtros
-    const selMes  = overlay.querySelector('#reapMesSelect');
-    const inpBusc = overlay.querySelector('#reapBusca');
-    selMes.value = mesAtual;
+    // Expor funções no escopo do modal
+    window.toggleSelecaoReap = function(prodId) {
+        prodId = parseInt(prodId);
+        if (selecionados.has(prodId)) {
+            selecionados.delete(prodId);
+        } else {
+            selecionados.add(prodId);
+        }
+        // Atualizar visual do card
+        const card = document.getElementById('card-reap-' + prodId);
+        const btn  = card ? card.querySelector('button[onclick*="toggleSelecaoReap"]') : null;
+        const sel  = selecionados.has(prodId);
+        if (card) card.style.borderColor = sel ? 'var(--primary)' : 'var(--border)';
+        if (btn) {
+            btn.style.background   = sel ? 'var(--primary)' : 'transparent';
+            btn.style.borderColor  = sel ? 'var(--primary)' : 'var(--border)';
+            btn.style.color        = sel ? 'white' : 'var(--text-secondary)';
+            btn.textContent        = sel ? '✓ Selecionado' : '+ Selecionar';
+        }
+        atualizarContador();
+    };
 
-    const selSrv = overlay.querySelector('#reapServidorSelect');
+    window.importarSelecionados = function() {
+        if (selecionados.size === 0) return;
+        const todos = _todosProdsReap.length > 0 ? _todosProdsReap : (DataStore.getProdutos() || []);
+
+        // Data de início = 1º dia do mês vigente
+        const hoje = new Date();
+        const dataInicioAuto = hoje.getFullYear() + '-' +
+            String(hoje.getMonth() + 1).padStart(2, '0') + '-01';
+
+        // Mesclar atividades de todos os produtos selecionados
+        const nomesImportados = [];
+        const atividadesMerge = [];
+        selecionados.forEach(id => {
+            const original = todos.find(p => parseInt(p.id) === parseInt(id));
+            if (!original) return;
+            nomesImportados.push(original.nome);
+            (original.atividades || []).forEach(a => atividadesMerge.push({ ...a }));
+        });
+
+        document.getElementById('modalReaproveitar')?.remove();
+
+        if (selecionados.size === 1) {
+            // Um único produto: importa nome e observações também
+            const id  = [...selecionados][0];
+            const ori = todos.find(p => parseInt(p.id) === parseInt(id));
+            produto.nome        = ori.nome;
+            produto.observacoes = ori.observacoes || '';
+            produto.entregas    = ori.entregas    || '';
+        } else {
+            // Múltiplos: limpa nome para o usuário preencher
+            produto.nome        = '';
+            produto.observacoes = '';
+            produto.entregas    = '';
+        }
+
+        produto.codigo     = '';
+        produto.dataInicio = dataInicioAuto;
+        produto.dataFim    = null;
+        produto.atividades = atividadesMerge;
+
+        renderStep1();
+
+        // Focar no nome se múltiplos produtos (nome fica em branco)
+        setTimeout(() => {
+            const dtInicio = document.getElementById('dataInicio');
+            const nomeProd = document.getElementById('nomeProduto');
+            if (dtInicio) {
+                dtInicio.style.borderColor = '';
+                dtInicio.style.boxShadow   = '';
+            }
+            if (selecionados.size > 1 && nomeProd) {
+                nomeProd.style.borderColor = 'var(--danger)';
+                nomeProd.style.boxShadow   = '0 0 0 2px rgba(239,68,68,0.2)';
+                nomeProd.focus();
+                nomeProd.addEventListener('input', () => {
+                    nomeProd.style.borderColor = '';
+                    nomeProd.style.boxShadow   = '';
+                }, { once: true });
+            }
+        }, 100);
+
+        const msg = selecionados.size === 1
+            ? 'Produto importado! Data de início: ' + new Date(dataInicioAuto + 'T12:00:00').toLocaleDateString('pt-BR')
+            : selecionados.size + ' produtos importados (' + atividadesMerge.length + ' atividades). Preencha o Nome do produto.';
+        Notify.success(msg);
+    };
+
+    // Filtros
+    const selMes  = overlay.querySelector('#reapMesSelect');
+    const selSrv  = overlay.querySelector('#reapServidorSelect');
+    const inpBusc = overlay.querySelector('#reapBusca');
+    selMes.value  = mesAtual;
+
     function atualizarLista() {
         overlay.querySelector('#reapLista').innerHTML = renderListaReap(selMes.value, inpBusc.value.trim(), selSrv ? selSrv.value : '');
     }
@@ -318,52 +432,14 @@ async function abrirModalReaproveitar() {
     inpBusc.addEventListener('input', Utils.debounce ? Utils.debounce(atualizarLista, 250) : atualizarLista);
 }
 
-
-
 function toggleReapCard(prodId) {
-    const painel = document.getElementById(`painel-reap-${prodId}`);
-    const arrow  = document.getElementById(`arrow-${prodId}`);
+    const painel = document.getElementById('painel-reap-' + prodId);
+    const arrow  = document.getElementById('arrow-' + prodId);
     if (!painel) return;
     const aberto = painel.style.display !== 'none';
     painel.style.display = aberto ? 'none' : 'block';
-    if (arrow) arrow.textContent = aberto ? '▼ ver atividades' : '▲ ocultar';
+    if (arrow) arrow.textContent = aberto ? '▼ atividades' : '▲ ocultar';
 }
-
-function confirmarReaproveitar(produtoId) {
-    // Buscar no DataStore (cache do banco)
-    const id = parseInt(produtoId);
-    const todos = _todosProdsReap.length > 0 ? _todosProdsReap : (DataStore.getProdutos() || []);
-    const original = todos.find(p => parseInt(p.id) === id);
-    if (!original) { Notify.error('Produto não encontrado.'); return; }
-
-    document.getElementById('modalReaproveitar')?.remove();
-
-    // Importar tudo exceto datas (usuário preenche as novas)
-    produto.codigo      = ''; // será gerado automaticamente ao salvar
-    produto.nome        = original.nome;
-    produto.observacoes = original.observacoes || '';
-    produto.entregas   = original.entregas   || '';
-    produto.dataInicio  = '';
-    produto.dataFim     = null;
-    produto.atividades  = (original.atividades || []).map(a => ({ ...a }));
-
-    renderStep1();
-    // Destaca campos de data como obrigatórios após render
-    setTimeout(() => {
-        const dtInicio = document.getElementById('dataInicio');
-        if (dtInicio) {
-            dtInicio.style.borderColor = 'var(--danger)';
-            dtInicio.style.boxShadow   = '0 0 0 2px rgba(239,68,68,0.2)';
-            dtInicio.focus();
-            dtInicio.addEventListener('change', () => {
-                dtInicio.style.borderColor = '';
-                dtInicio.style.boxShadow   = '';
-            }, { once: true });
-        }
-    }, 100);
-    Notify.success(`Produto #${original.codigo} importado! Preencha a Data de Início para continuar.`);
-}
-
 
 async function salvarStep1() {
     produto.nome        = document.getElementById('nomeProduto').value.trim();
