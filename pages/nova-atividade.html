@@ -21,7 +21,7 @@
             background: var(--bg-mid);
             border: 1px solid var(--border);
             border-radius: 10px;
-            margin-bottom: 1.5rem;
+            margin-bottom: 0;
             flex-wrap: wrap;
         }
         .produto-selector label {
@@ -65,10 +65,10 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 1.75rem 1.75rem 0.85rem 1.75rem;
+            padding: 1rem 1.25rem;
             border-bottom: 1px solid var(--border);
         }
-        .painel-header h3 { font-size: 1.05rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+        .painel-header h3 { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0; }
         .painel-count { font-size: 0.75rem; color: var(--text-muted); font-family: var(--code-font); }
         .painel-lista { flex: 1; overflow-y: auto; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
         .painel-item {
@@ -154,28 +154,29 @@
             <p class="page-subtitle">Adicione atividades a um produto em andamento</p>
         </div>
 
-        <!-- Seletor de servidor -->
-        <div class="server-selector" id="serverGroup" style="display:none;">
-            <div style="display:flex;align-items:center;gap:1.25rem;">
-                <label>SERVIDOR:</label>
-                <select id="serverSelect">
-                    <option value="">Carregando...</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Seletor de produto -->
-        <div class="produto-selector">
-            <label>PRODUTO:</label>
-            <select id="produtoSelect" onchange="selecionarProduto()">
-                <option value="">Selecione um servidor primeiro...</option>
-            </select>
-        </div>
-
-        <!-- Layout principal -->
+        <!-- Layout principal: esquerda = seletores + form, direita = painel atividades -->
         <div class="nova-ativ-layout">
 
-            <!-- Formulário esquerdo -->
+            <!-- Coluna esquerda: seletores + formulário -->
+            <div>
+                <!-- Seletor de servidor -->
+                <div class="server-selector" id="serverGroup" style="display:none;margin-bottom:1rem;">
+                    <div style="display:flex;align-items:center;gap:1.25rem;">
+                        <label>SERVIDOR:</label>
+                        <select id="serverSelect">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Seletor de produto -->
+                <div class="produto-selector" style="margin-bottom:1rem;">
+                    <label>PRODUTO:</label>
+                    <select id="produtoSelect" onchange="selecionarProduto()">
+                        <option value="">Selecione um servidor primeiro...</option>
+                    </select>
+                </div>
+
             <div class="card">
                 <h2 class="card-title">Adicionar Atividade</h2>
 
@@ -253,6 +254,7 @@
                     <button class="btn-salvar-ativ" class="btn-salvar-ativ" onclick="adicionarAtividade()">Salvar/Adicionar</button>
                 </div>
             </div>
+            </div><!-- fim coluna esquerda -->
 
             <!-- Painel direito -->
             <div class="painel-atividades">
