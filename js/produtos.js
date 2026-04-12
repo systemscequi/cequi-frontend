@@ -389,10 +389,18 @@ async function abrirModalReaproveitar() {
             if (!server) { Notify.error('Selecione um servidor primeiro!'); return; }
 
             Notify.info('Salvando ' + originais.length + ' produtos...');
+
+            // Buscar produtos existentes do servidor para gerar código sequencial
+            const todosProdAtual = DataStore.getProdutos() || [];
+            const prodsSrv = todosProdAtual.filter(p => parseInt(p.servidorId) === parseInt(server.id));
+            let proximoSeq = prodsSrv.length + 1;
+
             let salvos = 0;
             for (const ori of originais) {
+                const codigoGerado = String(proximoSeq).padStart(3, '0');
+                proximoSeq++;
                 const result = await MockAPI.createProduto({
-                    codigo:      '',
+                    codigo:      codigoGerado,
                     nome:        ori.nome,
                     observacoes: ori.observacoes || '',
                     entregas:    ori.entregas    || '',
