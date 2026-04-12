@@ -331,19 +331,19 @@ function atualizarPainel() {
     }
 
     lista.innerHTML = atividades.map((a, i) => `
-        <div class="painel-item">
-            <div class="painel-item-info">
-                <div class="painel-item-codigo">
+        <div class="painel-item" style="display:flex;align-items:flex-start;justify-content:space-between;gap:0.5rem;">
+            <div class="painel-item-info" style="flex:1;min-width:0;">
+                <div class="painel-item-codigo" style="display:flex;align-items:center;gap:0.35rem;flex-wrap:wrap;">
                     ${a.tipoLivre
                         ? `<span style="font-size:0.7rem;background:rgba(245,158,11,0.15);color:var(--warning);border:1px solid var(--warning);border-radius:4px;padding:0.1rem 0.35rem;">LIVRE</span>`
-                        : a.codigo}
-                    <span style="font-size:0.7rem;color:var(--text-muted);margin-left:0.35rem;">${(window.CATEGORIAS?.[a.categoria]?.nome || a.categoria)}</span>
+                        : `<span style="font-family:var(--code-font);font-weight:700;color:var(--secondary-light);font-size:0.8rem;">${a.codigo}</span>`}
+                    <span style="font-size:0.7rem;color:var(--text-muted);">${(window.CATEGORIAS?.[a.categoria]?.nome || a.categoria)}</span>
                 </div>
-                <div class="painel-item-nome">${a.atividade}</div>
-                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.15rem;">Peso ${a.peso} × ${a.complexidade}</div>
+                <div class="painel-item-nome" style="font-size:0.82rem;margin-top:0.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${a.atividade}</div>
+                <div style="font-size:0.7rem;color:var(--text-muted);margin-top:0.1rem;">Peso ${a.peso} × ${a.complexidade}${a.observacao ? ' · ' + a.observacao : ''}</div>
             </div>
-            <div style="display:flex;align-items:center;gap:0.5rem;">
-                <span class="painel-item-pts">${a.pontos} pts</span>
+            <div style="display:flex;align-items:center;gap:0.4rem;flex-shrink:0;padding-top:0.1rem;">
+                <span class="painel-item-pts" style="white-space:nowrap;">${a.pontos} pts</span>
                 <button onclick="editarAtividadePainel(${i})" title="Editar"
                     style="background:transparent;border:1px solid var(--border);color:var(--text-muted);border-radius:4px;padding:0.15rem 0.45rem;cursor:pointer;font-size:0.75rem;transition:all 0.15s;"
                     onmouseover="this.style.borderColor='var(--primary)';this.style.color='var(--primary-light)'"
