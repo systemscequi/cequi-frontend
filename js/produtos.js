@@ -351,7 +351,7 @@ async function abrirModalReaproveitar() {
         atualizarContador();
     };
 
-    window.importarSelecionados = function() {
+    window.importarSelecionados = async function() {
         if (selecionados.size === 0) return;
         const todos = _todosProdsReap.length > 0 ? _todosProdsReap : (DataStore.getProdutos() || []);
 
@@ -360,62 +360,54 @@ async function abrirModalReaproveitar() {
         const dataInicioAuto = hoje.getFullYear() + '-' +
             String(hoje.getMonth() + 1).padStart(2, '0') + '-01';
 
-        // Mesclar atividades de todos os produtos selecionados
-        const nomesImportados = [];
-        const atividadesMerge = [];
-        selecionados.forEach(id => {
-            const original = todos.find(p => parseInt(p.id) === parseInt(id));
-            if (!original) return;
-            nomesImportados.push(original.nome);
-            (original.atividades || []).forEach(a => atividadesMerge.push({ ...a }));
-        });
+        const ids = [...selecionados];
+        const originais = ids.map(id => todos.find(p => parseInt(p.id) === parseInt(id))).filter(Boolean);
 
         document.getElementById('modalReaproveitar')?.remove();
 
-        if (selecionados.size === 1) {
-            // Um único produto: importa nome e observações também
-            const id  = [...selecionados][0];
-            const ori = todos.find(p => parseInt(p.id) === parseInt(id));
+        if (originais.length === 0) return;
+
+        if (originais.length === 1) {
+            // Importação simples — fluxo normal de edição
+            const ori = originais[0];
+            produto.codigo      = '';
             produto.nome        = ori.nome;
             produto.observacoes = ori.observacoes || '';
             produto.entregas    = ori.entregas    || '';
+            produto.dataInicio  = dataInicioAuto;
+            produto.dataFim     = null;
+            produto.atividades  = (ori.atividades || []).map(a => ({ ...a }));
+            renderStep1();
+            setTimeout(() => {
+                const dtInicio = document.getElementById('dataInicio');
+                if (dtInicio) { dtInicio.style.borderColor = ''; dtInicio.style.boxShadow = ''; }
+            }, 100);
+            Notify.success('Produto importado! Data de início: ' + new Date(dataInicioAuto + 'T12:00:00').toLocaleDateString('pt-BR'));
         } else {
-            // Múltiplos: limpa nome para o usuário preencher
-            produto.nome        = '';
-            produto.observacoes = '';
-            produto.entregas    = '';
+            // Múltiplos — salvar cada um direto no banco e redirecionar para lista
+            const server = CurrentServer.get();
+            if (!server) { Notify.error('Selecione um servidor primeiro!'); return; }
+
+            Notify.info('Salvando ' + originais.length + ' produtos...');
+            let salvos = 0;
+            for (const ori of originais) {
+                const result = await MockAPI.createProduto({
+                    codigo:      '',
+                    nome:        ori.nome,
+                    observacoes: ori.observacoes || '',
+                    entregas:    ori.entregas    || '',
+                    dataInicio:  dataInicioAuto,
+                    dataFim:     null,
+                    atividades:  (ori.atividades || []).map(a => ({ ...a })),
+                    servidorId:  server.id,
+                    status:      'em-andamento',
+                    dataCriacao: new Date().toISOString()
+                });
+                if (result && result.success) salvos++;
+            }
+            Notify.success(salvos + ' produto(s) criado(s) com data ' + new Date(dataInicioAuto + 'T12:00:00').toLocaleDateString('pt-BR') + '!');
+            setTimeout(() => { window.location.href = 'lista-produtos.html'; }, 900);
         }
-
-        produto.codigo     = '';
-        produto.dataInicio = dataInicioAuto;
-        produto.dataFim    = null;
-        produto.atividades = atividadesMerge;
-
-        renderStep1();
-
-        // Focar no nome se múltiplos produtos (nome fica em branco)
-        setTimeout(() => {
-            const dtInicio = document.getElementById('dataInicio');
-            const nomeProd = document.getElementById('nomeProduto');
-            if (dtInicio) {
-                dtInicio.style.borderColor = '';
-                dtInicio.style.boxShadow   = '';
-            }
-            if (selecionados.size > 1 && nomeProd) {
-                nomeProd.style.borderColor = 'var(--danger)';
-                nomeProd.style.boxShadow   = '0 0 0 2px rgba(239,68,68,0.2)';
-                nomeProd.focus();
-                nomeProd.addEventListener('input', () => {
-                    nomeProd.style.borderColor = '';
-                    nomeProd.style.boxShadow   = '';
-                }, { once: true });
-            }
-        }, 100);
-
-        const msg = selecionados.size === 1
-            ? 'Produto importado! Data de início: ' + new Date(dataInicioAuto + 'T12:00:00').toLocaleDateString('pt-BR')
-            : selecionados.size + ' produtos importados (' + atividadesMerge.length + ' atividades). Preencha o Nome do produto.';
-        Notify.success(msg);
     };
 
     // Filtros
