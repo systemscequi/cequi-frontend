@@ -89,18 +89,18 @@
     async function inicializarCache() {
         if (!getToken()) return;
         try {
-            var session = {};
-            try { session = JSON.parse(sessionStorage.getItem('cequi_session') || '{}'); } catch(e) {}
-            var colsUrl = session.role === 'admin' ? '/colaboradores/todos' : '/colaboradores';
-            var cols = await reqSilent('GET', colsUrl);
-            if (cols && cols.success && cols.data) DataStore.cacheColaboradores(cols.data);
-            var fers = await reqSilent('GET', '/feriados');
-            if (fers && fers.success && fers.data) DataStore.cacheFeriados(fers.data);
-            if (session.userId) {
-                var pres = await reqSilent('GET', '/presencas/' + session.userId);
-                if (pres && pres.success && pres.data) DataStore.cachePresenca(session.userId, pres.data);
+            // Uma única requisição retorna colaboradores + feriados + presença
+            var data = await reqSilent('GET', '/init');
+            if (data && data.success) {
+                if (data.colaboradores) DataStore.cacheColaboradores(data.colaboradores);
+                if (data.feriados)      DataStore.cacheFeriados(data.feriados);
+                if (data.presenca) {
+                    var session = {};
+                    try { session = JSON.parse(sessionStorage.getItem('cequi_session') || '{}'); } catch(e) {}
+                    if (session.userId) DataStore.cachePresenca(session.userId, data.presenca);
+                }
+                console.log('✅ Cache sincronizado com o banco');
             }
-            console.log('✅ Cache sincronizado com o banco');
         } catch (e) {
             console.warn('⚠️ Cache sync falhou:', e.message);
         }
