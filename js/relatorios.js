@@ -159,38 +159,46 @@ async function gerarRelatorio() {
 
     Notify.info('Buscando dados...');
 
-    // Feriados
-    const ferR = await MockAPI.getFeriados();
-    feriadosCache = ferR.success ? ferR.data : [];
-
-    // Sincronizar presença do banco
+    // Buscar feriados, presença e produtos em paralelo
     if (tipo === 'individual') {
-        const pR = await MockAPI.getPresenca(servidorId);
+        // Individual: feriados + presença + produtos ao mesmo tempo
+        const [ferR, pR, prodR] = await Promise.all([
+            MockAPI.getFeriados(),
+            MockAPI.getPresenca(servidorId),
+            MockAPI.getProdutos(servidorId)
+        ]);
+        feriadosCache = ferR.success ? ferR.data : [];
         if (pR && pR.success) DataStore.cachePresenca(servidorId, pR.data);
-    } else {
-        for (const col of colaboradores) {
-            const pR = await MockAPI.getPresenca(col.id);
-            if (pR && pR.success) DataStore.cachePresenca(col.id, pR.data);
-        }
-    }
+        if (!prodR.success) { Notify.error('Erro ao carregar dados'); return; }
+        produtosData = prodR.data.filter(p => p.dataInicio && p.dataInicio >= dataIni && p.dataInicio <= dataFim);
 
-    // Buscar produtos
-    const prodR = await MockAPI.getProdutos(tipo === 'individual' ? servidorId : null);
-    if (!prodR.success) { Notify.error('Erro ao carregar dados'); return; }
+        document.getElementById('relatorioContent').style.display = 'block';
 
-    produtosData = prodR.data.filter(p => p.dataInicio && p.dataInicio >= dataIni && p.dataInicio <= dataFim);
-
-    document.getElementById('relatorioContent').style.display = 'block';
-
-    if (tipo === 'individual') {
-        // Buscar todos os produtos para calcular MRC
+        // MRC: buscar todos produtos em paralelo com o que já temos
         const todosR = await MockAPI.getProdutos();
         const todosProd = todosR.success ? todosR.data : produtosData;
         const mrc = calcMRC(colaboradores, todosProd, dataIni, dataFim);
         renderIndividual(servidorId, produtosData, dataIni, dataFim, mrc);
+
     } else {
+        // Equipe: feriados + presença de todos + produtos em paralelo
+        const presPromises = colaboradores.map(col => MockAPI.getPresenca(col.id));
+        const [ferR, prodR, ...presResults] = await Promise.all([
+            MockAPI.getFeriados(),
+            MockAPI.getProdutos(),
+            ...presPromises
+        ]);
+        feriadosCache = ferR.success ? ferR.data : [];
+        presResults.forEach((pR, i) => {
+            if (pR && pR.success) DataStore.cachePresenca(colaboradores[i].id, pR.data);
+        });
+        if (!prodR.success) { Notify.error('Erro ao carregar dados'); return; }
+        produtosData = prodR.data.filter(p => p.dataInicio && p.dataInicio >= dataIni && p.dataInicio <= dataFim);
+
+        document.getElementById('relatorioContent').style.display = 'block';
         renderEquipe(produtosData, dataIni, dataFim);
     }
+
 
     relatorioGerado = true;
     document.getElementById('relatorioContent').scrollIntoView({ behavior: 'smooth' });
